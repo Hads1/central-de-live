@@ -1,0 +1,96 @@
+const fs = require('node:fs');
+const path = require('node:path');
+function createSRRoutes({ directory, backend, getLanguage = () => 'pt-BR' }) {
+  const assets = path.join(__dirname, 'vendor', 'sr', 'avatar');
+  const files = new Set(fs.readdirSync(assets));
+  let visualDemandAt = 0;
+  return async (req, res, file) => {
+    if (file === 'api/ui-language' && req.method === 'GET') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ language: getLanguage() }));
+      return;
+    }
+    if (
+      ['i18n.js', 'i18n-data.js', 'i18n-ui.js', 'layout-template.js'].includes(
+        file,
+      ) &&
+      req.method === 'GET'
+    ) {
+      res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+      res.end(fs.readFileSync(path.join(__dirname, file)));
+      return;
+    }
+    if (file === 'api/sr-layout' && req.method === 'POST') {
+      const expected = 'http://' + req.headers.host;
+      if (
+        req.headers.origin !== expected ||
+        req.headers['x-kaia-editor'] !== '1'
+      ) {
+        res.writeHead(403);
+        res.end();
+        return;
+      }
+      let body = '';
+      try {
+        for await (const chunk of req) {
+          body += chunk;
+          if (Buffer.byteLength(body) > 100000)
+            throw Error('Layout muito grande.');
+        }
+        const saved = await backend.call('layout', JSON.parse(body));
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(saved));
+      } catch {
+        if (!res.headersSent) res.writeHead(400);
+        res.end();
+      }
+      return;
+    }
+    if (req.method !== 'GET' || !files.has(file)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    if (file === 'sr_audio_visual.json' && Date.now() - visualDemandAt > 5000) {
+      visualDemandAt = Date.now();
+      const lease = path.join(directory, 'avatar', 'visual-demand.json');
+      try {
+        fs.mkdirSync(path.dirname(lease), { recursive: true });
+        fs.writeFileSync(lease, JSON.stringify({ at: Date.now() / 1000 }));
+      } catch {}
+    }
+    const source = file.endsWith('.json')
+      ? path.join(directory, 'avatar', file)
+      : path.join(assets, file);
+    const fallback = path.join(assets, file);
+    const ext = path.extname(file);
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader(
+      'Content-Type',
+      {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.json': 'application/json',
+      }[ext] + '; charset=utf-8',
+    );
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self'; object-src 'none'",
+    );
+    try {
+      const data = fs.readFileSync(fs.existsSync(source) ? source : fallback);
+      if (ext === '.json' && file === 'sr.json') {
+        const publicState = JSON.parse(data);
+        delete publicState.user;
+        delete publicState.notifications;
+        if (Array.isArray(publicState.fila))
+          publicState.fila = publicState.fila.map(({ user, ...item }) => item);
+        res.end(JSON.stringify(publicState));
+      } else res.end(data);
+    } catch {
+      res.writeHead(404);
+      res.end();
+    }
+  };
+}
+module.exports = { createSRRoutes };

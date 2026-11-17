@@ -1,0 +1,1318 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' https: data: file:; style-src 'self'; media-src 'self' file:; script-src 'self'; connect-src 'none'; frame-src http://127.0.0.1:*"
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="viewers.css" />
+    <title>Central de Live</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="native-controls">
+    <header>
+      <span class="brand">CENTRAL <b>DE LIVE</b></span
+      ><button
+        id="language-toggle"
+        type="button"
+        aria-label="Idioma"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        data-i18n-ignore
+      >
+        Português</button
+      ><span class="read">CHAT E AUTOMAÇÕES</span
+      ><button
+        id="fullscreen"
+        title="Maximizar ou restaurar (F11). Esc para restaurar."
+        aria-label="Maximizar janela"
+      >
+        ⛶</button
+      ><button id="minimize" title="Minimizar">−</button
+      ><button id="close" title="Fechar">×</button>
+    </header>
+    <div id="language-picker" role="dialog" aria-label="Idioma" hidden></div>
+    <p id="language-status" role="status"></p>
+    <div
+      class="window-drag-strip"
+      title="Arraste esta faixa para mover ou encaixar a janela"
+    >
+      ⋮⋮ Arraste para mover a janela
+    </div>
+    <main>
+      <nav id="tabs" aria-label="Configurações">
+        <button id="tab-chat" aria-pressed="true">Chat</button
+        ><button id="tab-widget" aria-pressed="false">Widget</button>
+        <button id="tab-reader" aria-pressed="false">Leitor</button>
+        <button id="tab-sr" aria-pressed="false">SR / Spotify</button>
+        <button id="tab-alerts" aria-pressed="false">Alertas</button>
+        <button id="tab-studio" aria-pressed="false">Conexões e resgates</button>
+        <button id="tab-guide" aria-pressed="false" data-i18n-ignore>Tutorial</button>
+      </nav>
+      <section id="guide-panel" class="feature-panel" hidden data-i18n-ignore>
+        <h1>Tutorial da Central de Live</h1>
+        <p>Criado por <strong>Hads</strong>.</p>
+        <div class="feature-actions">
+          <button data-guide-tab="studio">Abrir Conexões e resgates</button>
+          <button data-guide-tab="widget">Abrir Widget</button>
+        </div>
+
+        <details class="studio-card" open>
+          <summary>Primeira abertura e chat</summary>
+          <ol>
+            <li>Extraia todo o ZIP portátil e abra <strong>Central de Live.exe</strong>.</li>
+            <li>Na aba <strong>Chat</strong>, informe nome ou URL dos canais que quer acompanhar, marque <strong>Ativar</strong> em cada um e clique em <strong>Salvar e conectar</strong>.</li>
+            <li>Para responder pelo chat, vincule suas contas em <strong>Conexões e resgates</strong>. Na caixa de mensagem, abra o seletor de destinos e marque Twitch, Kick, YouTube ou uma combinação deles.</li>
+            <li>O resultado do envio aparece por destino. Se apenas uma plataforma falhar, a Central deixa esse destino marcado para tentar novamente.</li>
+          </ol>
+          <p>O botão de modo jogo deixa o chat transparente e permite clicar no jogo através da janela. Pressione <kbd>Ctrl+Shift+F9</kbd> para recuperar os controles e <kbd>Ctrl+Shift+F10</kbd> para alternar a passagem de cliques.</p>
+        </details>
+
+        <details class="studio-card">
+          <summary>Conectar a Twitch</summary>
+          <ol>
+            <li>Em <strong>Conexões e resgates → Twitch → Configuração do aplicativo</strong>, clique em <strong>Abrir console da Twitch</strong>.</li>
+            <li>Registre um aplicativo com nome único. Adicione <code>http://localhost:3000</code> como URL de redirecionamento OAuth, escolha a categoria <strong>Chat Bot</strong> e o tipo de cliente <strong>Público</strong>. Conclua a validação e crie o aplicativo.</li>
+            <li>Abra <strong>Gerenciar</strong>, copie o <strong>Client ID</strong> e cole na Central. O login neste aplicativo usa código de dispositivo e funciona com o Client ID.</li>
+            <li>Clique em <strong>Conectar Twitch</strong> e autorize pelo navegador com a conta dona do canal. Aguarde o status <strong>Chat ativo · Resgates ativos</strong>.</li>
+            <li>Para conferir, selecione <strong>Twitch</strong> em <strong>Plataforma da recompensa</strong> e clique em <strong>Carregar recompensas</strong>. Use <strong>Desconectar</strong> e autorize novamente se precisar atualizar as permissões.</li>
+          </ol>
+        </details>
+
+        <details class="studio-card">
+          <summary>Conectar a Kick</summary>
+          <ol>
+            <li>Em <strong>Conexões e resgates → Kick → Configuração do aplicativo</strong>, abra as configurações de desenvolvedor da Kick e crie um aplicativo.</li>
+            <li>Cadastre exatamente <code>http://localhost:19350/central/kick</code> como URL de retorno. Copie o <strong>Client ID</strong> e o <strong>Client Secret</strong> para os campos correspondentes na Central. Clique em <strong>Salvar aplicativo Kick</strong>.</li>
+            <li>Clique em <strong>Conectar Kick</strong> e autorize com a conta dona do canal. Confira se a Central mostra <strong>Conta vinculada</strong> e o nome do canal.</li>
+            <li>Selecione <strong>Kick</strong> em <strong>Plataforma da recompensa</strong> e carregue a lista. Se houver um erro de autorização, desconecte, conecte novamente e confira a mensagem ao lado do botão.</li>
+            <li>Faça um novo resgate depois de salvar a regra. A Central consulta a fila da Kick periodicamente, então o aviso pode levar alguns segundos.</li>
+          </ol>
+          <p><strong>Lendo o canal</strong> na barra inferior indica que o chat público está conectado. A autorização da conta libera o envio de mensagens e o acesso aos pontos.</p>
+        </details>
+
+        <details class="studio-card">
+          <summary>YouTube Live, Starvios e Spotify</summary>
+          <ul>
+            <li><strong>YouTube Live</strong> — habilite a YouTube Data API v3 no Google Cloud e crie um cliente OAuth de aplicativo para computador. Importe o JSON pela Central e clique em <strong>Conectar YouTube</strong>. Se o projeto estiver em modo de teste, adicione sua conta à lista de usuários de teste. O chat fica disponível durante uma live ativa com chat habilitado.</li>
+            <li><strong>Starvios</strong> — adicione o nome ou URL do canal público. Para entrar na conta e escrever, use <strong>Abrir Starvios</strong>.</li>
+            <li><strong>Spotify e sessão do YouTube para músicas</strong> — use os controles da aba <strong>SR / Spotify</strong>. Essa sessão do YouTube é destinada à reprodução de pedidos.</li>
+          </ul>
+        </details>
+
+        <details class="studio-card">
+          <summary>Pontos do canal, GIFs, vídeos e Stream Deck</summary>
+          <ol>
+            <li>Em <strong>Mini alertas de pontos do canal</strong>, escolha a plataforma, carregue as recompensas e selecione uma delas.</li>
+            <li>Escolha um vídeo, GIF ou imagem e, se quiser, um áudio separado. Quando o áudio separado estiver preenchido, ele toca junto com o visual e substitui o som embutido do vídeo.</li>
+            <li>Para usar a mesma mídia em outra plataforma, selecione a segunda recompensa em <strong>Vincular a uma recompensa da outra plataforma</strong>. Salve a regra e clique em <strong>Testar regra salva</strong>.</li>
+            <li>Para cadastrar uma recompensa nova, abra <strong>Criar recompensa nos canais</strong>, preencha nome, custo e descrição e marque Twitch, Kick ou as duas. Salve a mídia localmente na Central. No chat, um novo resgate aparece com o nome de quem usou os pontos.</li>
+            <li>Para disparar manualmente pelo Stream Deck, salve um atalho global na regra, por exemplo <kbd>Ctrl+Alt+F8</kbd>, e use a mesma combinação em uma ação <strong>Tecla de atalho</strong> no Stream Deck. Mantenha a Central aberta.</li>
+          </ol>
+          <p>A aba <strong>Alertas</strong> também permite monitorar fontes externas, como widgets de alerta com texto. Configure o endereço e o seletor do texto e use a prévia para conferir a detecção.</p>
+        </details>
+
+        <details class="studio-card">
+          <summary>Fontes e faixas de áudio no OBS</summary>
+          <ol>
+            <li><strong>Imagem dos alertas</strong> — em <strong>Mini alertas</strong>, copie a URL do widget de alertas. No OBS, adicione uma fonte <strong>Navegador</strong>, cole a URL com <strong>Arquivo local</strong> desmarcado e posicione a fonte na cena.</li>
+            <li><strong>Som dos alertas</strong> — selecione <strong>OBS · Fonte Navegador de áudio</strong>, clique em <strong>Salvar saída</strong> e copie a URL de áudio. Crie uma segunda fonte <strong>Navegador</strong> no OBS, cole a URL e marque <strong>Controlar áudio via OBS</strong>. Use <strong>Testar no OBS</strong> e confira o medidor dessa fonte.</li>
+            <li><strong>Faixa isolada</strong> — nas <strong>Propriedades avançadas de áudio</strong> do OBS, reserve uma faixa para a fonte de alertas e desmarque essa faixa nas outras fontes. Em <strong>Configurações → Saída → Gravação</strong>, habilite as faixas que quer salvar. Se quiser ouvir os alertas também na live, marque a faixa da transmissão na fonte de alertas.</li>
+            <li><strong>SR, leitor e som do chat</strong> — selecione as saídas nas abas <strong>SR / Spotify</strong> e <strong>Leitor</strong>. Para separá-las no OBS, capture os processos <code>kaia_musica.exe</code>, <code>kaia_leitura.exe</code> e <code>kaia_tts.exe</code> individualmente, ou use dispositivos de áudio virtuais distintos.</li>
+          </ol>
+        </details>
+
+        <details class="studio-card">
+          <summary>Leitor, pedidos de música e contadores</summary>
+          <ul>
+            <li><strong>Leitor</strong> — escolha voz, volume e dispositivo de saída. Configure o intervalo, usuários prioritários e bloqueios e use <strong>Testar voz</strong> antes de ativar.</li>
+            <li><strong>SR / Spotify</strong> — ative pedidos pelo chat, selecione a saída da música e ajuste as filas. Quando ativado, <code>!sr</code> seguido de uma música ou link envia um pedido para a fila. Use os controles do player para navegar, pausar ou reorganizar.</li>
+            <li><strong>Widget de chat</strong> — em <strong>Widget</strong>, copie a URL do chat para uma fonte Navegador do OBS. Ajuste fonte, layout e cores na prévia.</li>
+            <li><strong>Contador de espectadores</strong> — ative os contadores na aba <strong>Widget</strong> e escolha as plataformas. As contas Twitch, Kick e YouTube vêm de <strong>Conexões e resgates</strong>. No OBS, use a URL do contador como fonte independente para posicioná-la sem cobrir o chat ou os alertas.</li>
+            <li><strong>Transcrição</strong> — mensagens e avisos de resgate ficam em um único TXT. O caminho padrão é <code>%APPDATA%\Central de Live\chat.txt</code>.</li>
+          </ul>
+        </details>
+      </section>
+      <section id="studio-panel" class="feature-panel" hidden data-i18n-ignore>
+        <h1>Conexões e resgates</h1>
+        <p id="studio-feedback" role="status"></p>
+        <section class="studio-card">
+          <h2>Twitch</h2>
+          <p id="studio-twitch" role="status">Desconectada</p>
+          <div class="feature-actions">
+            <button id="studio-login">Conectar Twitch</button>
+            <button id="studio-disconnect">Desconectar</button>
+          </div>
+          <details id="studio-twitch-config">
+            <summary>Configuração do aplicativo</summary>
+            <p>Cadastre a Central como aplicativo Público uma vez. Use a conta do canal na hora de autorizar.</p>
+            <button id="studio-twitch-portal">Abrir console da Twitch</button>
+            <label>Client ID público <input id="studio-client" autocomplete="off" spellcheck="false" /></label>
+            <button id="studio-twitch-save">Salvar Client ID</button>
+          </details>
+        </section>
+        <section class="studio-card">
+          <h2>Kick</h2>
+          <p id="studio-kick-status" role="status">Desconectado</p>
+          <div class="feature-actions">
+            <button id="studio-kick-login">Conectar Kick</button>
+            <button id="studio-kick-disconnect">Desconectar</button>
+          </div>
+          <details id="studio-kick-config">
+            <summary>Configuração do aplicativo</summary>
+            <p>Cadastre a URL de retorno <code>http://localhost:19350/central/kick</code> nas configurações de desenvolvedor.</p>
+            <button id="studio-kick-portal">Abrir configurações da Kick</button>
+            <label>Client ID <input id="studio-kick-client" autocomplete="off" spellcheck="false" /></label>
+            <label>Client Secret <input id="studio-kick-secret" type="password" autocomplete="off" /></label>
+            <button id="studio-kick-save">Salvar aplicativo Kick</button>
+          </details>
+          <p>A conexão de conta autoriza o acesso aos pontos do canal. O status de leitura do chat fica na barra inferior.</p>
+        </section>
+        <section class="studio-card">
+          <h2>YouTube Live</h2>
+          <p id="studio-youtube-status" role="status">Desconectado</p>
+          <div class="feature-actions">
+            <button id="studio-youtube-login">Conectar YouTube</button>
+            <button id="studio-youtube-disconnect">Desconectar</button>
+          </div>
+          <details id="studio-youtube-config">
+            <summary>Configuração do aplicativo</summary>
+            <p>Habilite a YouTube Data API v3 e crie um cliente OAuth do tipo Aplicativo para computador.</p>
+            <button id="studio-youtube-portal">Abrir Google Cloud</button>
+            <label>Client ID <input id="studio-youtube-client" autocomplete="off" spellcheck="false" /></label>
+            <label>Client Secret <input id="studio-youtube-secret" type="password" autocomplete="off" /></label>
+            <div class="feature-actions">
+              <button id="studio-youtube-save">Salvar aplicativo YouTube</button>
+              <button id="studio-youtube-import">Importar JSON do Google</button>
+            </div>
+          </details>
+        </section>
+        <section class="studio-card">
+          <h2>Starvios</h2>
+          <p>Use o canal público para leitura na Central. A conta e o envio de mensagens ficam no site do Starvios.</p>
+          <label>Canal ou URL <input id="studio-starvios-channel" autocomplete="off" /></label>
+          <div class="feature-actions">
+            <button id="studio-starvios-save">Adicionar canal público</button>
+            <button id="studio-starvios-portal">Abrir Starvios</button>
+          </div>
+          <p id="studio-starvios-status" role="status"></p>
+        </section>
+        <section class="studio-card">
+          <h2>Mini alertas de pontos do canal</h2>
+          <p id="studio-kick-rewards-status" role="status"></p>
+          <label for="studio-alert-overlay-url">Widget de alertas para o OBS</label>
+          <div class="studio-inline">
+            <input id="studio-alert-overlay-url" readonly />
+            <button id="studio-copy-alert-overlay">Copiar URL</button>
+          </div>
+          <p>No OBS, adicione uma fonte Navegador com esta URL. Use Testar combinação para verificar o widget.</p>
+          <p id="studio-alert-overlay-status" role="status"></p>
+          <label>Saída de áudio das automações
+            <select id="studio-alert-output">
+              <option value="">Padrão do Windows</option>
+              <option value="@obs">OBS · Fonte Navegador de áudio</option>
+            </select>
+          </label>
+          <label for="studio-obs-audio-url">URL da fonte de áudio do OBS</label>
+          <div class="studio-inline">
+            <input id="studio-obs-audio-url" readonly />
+            <button id="studio-copy-obs-audio">Copiar URL de áudio</button>
+            <button id="studio-test-obs-audio">Testar no OBS</button>
+          </div>
+          <p>Na fonte Navegador, marque Controlar áudio via OBS para receber os alertas em um canal próprio do mixer.</p>
+          <div class="feature-actions">
+            <button id="studio-alert-output-refresh">Buscar dispositivos</button>
+            <button id="studio-alert-output-save">Salvar saída</button>
+          </div>
+          <label>Plataforma da recompensa
+            <select id="studio-reward-provider"><option value="twitch">Twitch</option><option value="kick">Kick</option></select>
+          </label>
+          <div class="feature-actions">
+            <button id="studio-reload">Carregar recompensas</button>
+            <button id="studio-connect-kick-rewards" hidden>Conectar Kick</button>
+          </div>
+          <p id="studio-rewards-status" role="status"></p>
+          <label>Recompensa
+            <select id="studio-rewards"><option value="">Selecione uma recompensa</option></select>
+          </label>
+          <label>Vincular a uma recompensa da outra plataforma
+            <select id="studio-partner"><option value="">Sem vínculo</option></select>
+          </label>
+          <label for="studio-visual-file">Vídeo, GIF ou imagem</label>
+          <div class="studio-inline">
+            <input id="studio-visual-file" readonly />
+            <button id="studio-pick-visual">Escolher</button>
+            <button id="studio-clear-visual">Limpar</button>
+          </div>
+          <label for="studio-audio-file">Áudio separado</label>
+          <div class="studio-inline">
+            <input id="studio-audio-file" readonly />
+            <button id="studio-pick-audio">Escolher</button>
+            <button id="studio-clear-audio">Limpar</button>
+          </div>
+          <button id="studio-use-linked-audio" hidden>Usar áudio já vinculado</button>
+          <p>O áudio separado toca junto com o visual. Se ficar vazio, o vídeo usa sua própria faixa de áudio.</p>
+          <div class="studio-inline">
+            <label>Volume (%) <input id="studio-volume" type="number" min="0" max="100" value="75" /></label>
+            <label>Duração máxima (s) <input id="studio-duration" type="number" min="1" max="120" value="8" /></label>
+          </div>
+          <label>Atalho global para Stream Deck <input id="studio-hotkey" maxlength="80" placeholder="Ex.: Ctrl+Alt+F8" /></label>
+          <div class="feature-actions">
+            <button id="studio-save">Salvar regra</button>
+            <button id="studio-test">Testar regra salva</button>
+            <button id="studio-preview-file">Testar combinação</button>
+            <button id="studio-remove">Remover regra</button>
+          </div>
+          <details>
+            <summary>Criar recompensa nos canais</summary>
+            <label>Nome <input id="studio-reward-title" maxlength="45" /></label>
+            <label>Custo em pontos <input id="studio-reward-cost" type="number" min="1" /></label>
+            <label>Descrição <input id="studio-reward-description" maxlength="200" /></label>
+            <label><input id="studio-create-twitch" type="checkbox" /> Twitch</label>
+            <label><input id="studio-create-kick" type="checkbox" /> Kick</label>
+            <p>A mídia dos campos acima fica na Central e toca no resgate.</p>
+            <button id="studio-create-rewards">Criar recompensas selecionadas</button>
+          </details>
+          <details><summary>Últimos resgates</summary><ol id="studio-history"></ol></details>
+        </section>
+        <section class="studio-card">
+          <h2>Automações locais</h2>
+          <details>
+            <summary>Criar comando de chat</summary>
+            <label>Nome <input id="studio-command-name" maxlength="80" /></label>
+            <label>Gatilho <input id="studio-command-trigger" placeholder="!comando" maxlength="41" /></label>
+            <label>Resposta <input id="studio-command-response" maxlength="500" /></label>
+            <button id="studio-command-create">Criar comando</button>
+          </details>
+          <div class="studio-inline">
+            <select id="studio-collection" aria-label="Dados das automações">
+              <option value="commands">Comandos</option>
+              <option value="currency">Moedas</option>
+              <option value="inventory">Inventários</option>
+              <option value="counters">Contadores</option>
+              <option value="users">Usuários</option>
+              <option value="quotes">Citações</option>
+            </select>
+            <button id="studio-sync">Atualizar</button>
+          </div>
+          <label>Buscar <input id="studio-search" type="search" maxlength="80" /></label>
+          <p id="studio-automation-count"></p>
+          <label>Argumentos do comando <input id="studio-args" maxlength="1000" /></label>
+          <ul id="studio-automation-list"></ul>
+        </section>
+      </section>
+      <section id="alerts-panel" class="feature-panel" hidden>
+        <h1>Alertas para o streamer</h1>
+        <p>
+          Adicione os URLs de widget usados no OBS. Streamlabs, StreamElements
+          ou serviço personalizado. Cada fonte tem seu próprio nome/plataforma.
+          Os widgets ficam sem som; o texto reconhecido é lido somente na saída
+          do Leitor. Ativar fontes de alerta também permite avisos com a leitura
+          normal desligada.
+        </p>
+        <p>
+          Compatível com texto HTML acessível. Conteúdo em canvas, imagem/vídeo
+          ou iframe de outro domínio pode não ser legível. Não é OCR e não
+          identifica eventos ausentes do widget. Use o botão de teste do seu
+          serviço após salvar. Não compartilhe seus URLs privados.
+        </p>
+        <div id="alert-sources"></div>
+        <button id="add-alert-source">Nova fonte de alerta</button
+        ><button id="save-alerts">Salvar e monitorar fontes</button>
+        <p id="alerts-status" role="status"></p>
+        <button id="test-alert-voice">Testar voz de um alerta</button>
+        <p class="announcement-status" role="status">
+          Os avisos usam a saída salva no Leitor.
+        </p>
+        <h2>Último alerta recebido</h2>
+        <p id="last-alert">Nenhum alerta recebido nesta sessão.</p>
+        <button id="repeat-alert">Ler último alerta novamente</button>
+      </section>
+      <section id="reader-panel" class="feature-panel" hidden>
+        <h1>Leitor de chat</h1>
+        <p>
+          Lê as novas mensagens dos canais conectados na aba Chat. Sem IA, sem
+          responder na live. Os bloqueios gerais também valem para a voz.
+        </p>
+        <label class="check-row"
+          ><input type="checkbox" id="reader-enabled" /> Ativar leitura</label
+        >
+        <div class="type-grid">
+          <label
+            >Ler uma mensagem a cada N mensagens<input
+              id="reader-every"
+              type="number"
+              min="1"
+              max="100"
+              value="1"
+          /></label>
+          <label
+            >Baixa prioridade: ler uma a cada N<input
+              id="reader-lowEvery"
+              type="number"
+              min="1"
+              max="100"
+              value="5"
+          /></label>
+          <label
+            >Intervalo mínimo entre inícios (segundos)<input
+              id="reader-interval"
+              type="number"
+              min="0"
+              max="300"
+              value="0"
+          /></label>
+          <label
+            >Atraso máximo para iniciar a fala (segundos)<input
+              id="reader-maxWait"
+              type="number"
+              min="5"
+              max="120"
+              value="15"
+          /></label>
+          <label
+            >Máximo de mensagens aguardando<input
+              id="reader-maxQueue"
+              type="number"
+              min="1"
+              max="50"
+              value="10"
+          /></label>
+          <label
+            >Máximo de caracteres por fala<input
+              id="reader-maxChars"
+              type="number"
+              min="50"
+              max="1000"
+              value="300"
+          /></label>
+          <label
+            >Volume (%)<input
+              id="reader-volume"
+              type="number"
+              min="1"
+              max="100"
+              value="80"
+          /></label>
+          <label class="wide"
+            >Saída da leitura<select id="reader-output">
+              <option value="">Escolha uma saída de áudio</option>
+            </select></label
+          >
+          <label
+            >Idioma da voz<select id="reader-voice-language"></select
+          ></label>
+          <label
+            >Gênero da voz<select id="reader-voice-gender">
+              <option value="all">Todas as vozes</option>
+              <option value="Female">Feminina</option>
+              <option value="Male">Masculina</option>
+            </select></label
+          >
+          <label
+            >Voz<select id="reader-voice" data-i18n-ignore>
+              <option value="pt-BR-FranciscaNeural">
+                Francisca · português BR
+              </option>
+              <option value="pt-BR-ThalitaMultilingualNeural">
+                Thalita · português BR
+              </option>
+              <option value="pt-BR-AntonioNeural">
+                Antonio · português BR
+              </option>
+            </select></label
+          >
+          <label
+            >Velocidade (%)<input
+              id="reader-rate"
+              type="number"
+              min="-50"
+              max="100"
+              value="0"
+          /></label>
+        </div>
+        <label class="check-row"
+          ><input id="reader-sayName" type="checkbox" checked /> Falar o nome do
+          usuário</label
+        >
+        <label class="check-row"
+          ><input id="reader-ignoreCommands" type="checkbox" checked /> Ignorar
+          comandos iniciados com !</label
+        >
+        <div class="blocked-grid">
+          <label
+            >Alta prioridade<textarea
+              id="reader-high"
+              rows="4"
+              placeholder="Um nick por linha"
+            ></textarea>
+          </label>
+          <label
+            >Baixa prioridade<textarea
+              id="reader-low"
+              rows="4"
+              placeholder="Um nick por linha"
+            ></textarea>
+          </label>
+        </div>
+        <p>
+          Alta prioridade lê todas as mensagens e passa à frente da fila, após
+          terminar a fala atual. Prioridade normal e baixa têm contagens
+          separadas. Para acompanhar a live, mensagens antigas são descartadas
+          conforme o atraso máximo, inclusive as prioritárias. Em fila cheia, as
+          mais antigas de menor prioridade saem primeiro. O intervalo conta
+          desde o início da preparação, sem acrescentar uma pausa após cada
+          fala. Histórico recuperado ao conectar não é falado.
+        </p>
+        <div class="feature-actions">
+          <button id="save-reader" class="primary">Salvar leitura</button
+          ><button id="reader-test">Testar voz</button
+          ><button id="reader-clear">Limpar fila</button
+          ><button id="reader-stop">Parar leitura</button
+          ><button id="refresh-devices">Atualizar saídas de áudio</button>
+        </div>
+        <p id="reader-status" role="status">
+          Selecione a saída e salve antes de ativar.
+        </p>
+        <p id="media-device-status" role="status"></p>
+        <p>
+          Para ouvir só no headset, escolha uma saída que não esteja capturada
+          no OBS. A leitura não troca para a saída padrão se o dispositivo
+          escolhido ficar indisponível. Voz Edge requer internet.
+        </p>
+      </section>
+      <section id="sr-panel" class="feature-panel" hidden>
+        <h1>Song Request / Spotify</h1>
+        <p>
+          Pedidos !sr nome da música ou !sr link do YouTube, recebidos nos chats
+          conectados, entram na fila. Ative abaixo para aceitar pedidos.
+          Usuários bloqueados e mensagens históricas são ignorados.
+        </p>
+        <label class="check-row"
+          ><input id="sr-enabled" type="checkbox" /> Aceitar pedidos !sr das
+          lives</label
+        >
+        <div class="type-grid">
+          <label
+            >Volume<input
+              id="sr-volume"
+              type="range"
+              min="0"
+              max="100"
+              value="80" /></label
+          ><label
+            >Repetir<select id="sr-repeat">
+              <option value="off">Desligado</option>
+              <option value="one">Faixa atual</option>
+              <option value="playlist">Playlist</option>
+            </select></label
+          ><label class="wide"
+            >Saída da música<select id="sr-output">
+              <option value="">Saída padrão do Windows</option>
+            </select></label
+          >
+        </div>
+        <label class="check-row"
+          ><input id="sr-shuffle" type="checkbox" /> Playlist aleatória</label
+        >
+        <button id="save-sr" class="primary">Salvar SR</button>
+        <h2 id="sr-now">Nenhuma música em reprodução</h2>
+        <p id="sr-progress"></p>
+        <div class="music-timeline">
+          <input
+            id="sr-timeline"
+            type="range"
+            min="0"
+            max="1"
+            value="0"
+            step="0.1"
+            disabled
+            aria-label="Posição da música"
+          /><output id="sr-time">0:00 / --:--</output>
+        </div>
+        <div class="feature-actions">
+          <button data-sr="prev">Anterior</button
+          ><button data-sr="play_pause">Reproduzir / Pausar</button
+          ><button data-sr="skip">Próxima</button
+          ><button data-sr="stop">Parar</button
+          ><button id="sr-mute" data-sr="mute_toggle" aria-pressed="false">
+            Silenciar SR</button
+          ><button data-sr="limpar">Parar e limpar todas as filas</button
+          ><button data-sr="retry">Tentar pedido novamente</button>
+          <button id="sr-test-audio">Testar som do SR</button>
+        </div>
+        <p id="sr-audio-status" role="status"></p>
+        <p>
+          Privacidade dos áudios: músicas do SR são transmitidas sem download
+          permanente. As falas usam arquivos temporários, apagados após o uso e
+          ao fechar. Restos de uma interrupção são limpos na próxima
+          inicialização do motor de áudio. Sons escolhidos por você e o backup
+          TXT são preservados.
+        </p>
+        <label
+          >Ir para o segundo<input
+            id="sr-seek"
+            type="number"
+            min="0"
+            value="0" /></label
+        ><button id="sr-seek-go">Avançar posição</button>
+        <label
+          >Música ou link<input
+            id="sr-query"
+            type="text"
+            placeholder="Nome da música ou URL do YouTube" /></label
+        ><button id="sr-request">Adicionar pedido SR</button
+        ><button id="sr-add-background">
+          Adicionar faixa à playlist de fundo
+        </button>
+        <label
+          >Playlist do YouTube<input
+            id="sr-playlist"
+            type="text"
+            placeholder="https://www.youtube.com/playlist?list=..." /></label
+        ><button id="sr-playlist-add">Adicionar playlist</button>
+        <p id="sr-playlist-job" role="status"></p>
+        <p id="sr-status" role="status"></p>
+        <button id="test-request-voice">Testar voz de pedido musical</button
+        ><button id="repeat-request">Ler último pedido novamente</button>
+        <p class="announcement-status" role="status">
+          Os avisos usam a saída salva no Leitor.
+        </p>
+        <details open>
+          <summary>Limites e avisos privados</summary>
+          <div class="type-grid">
+            <label
+              >Limite de pedidos aguardando<input
+                id="sr-requestLimit"
+                type="number"
+                min="1"
+                max="500"
+                value="80"
+            /></label>
+            <label
+              >Quantidade de músicas na playlist (0 = todas)<input
+                id="sr-playlistLimit"
+                type="number"
+                min="0"
+                value="0"
+            /></label>
+            <label class="check-row"
+              ><input id="sr-announceRequests" type="checkbox" checked />Ler
+              solicitante e título quando o pedido for aceito</label
+            >
+          </div>
+          <p>
+            Salve no botão Salvar SR. Pedidos são os próximos a tocar depois da
+            faixa atual, antes das músicas da playlist. Os limites valem para
+            novas entradas e não removem músicas já aceitas. Sons do chat e
+            avisos usam a saída do Leitor; música usa a saída do SR. O OBS deve
+            capturar só a saída/processo do SR para manter os avisos privados.
+          </p>
+        </details>
+        <details>
+          <summary>Atalhos globais editáveis do SR</summary>
+          <p>
+            Volume das músicas: cada toque aumenta ou diminui 5%. Sugestões:
+            Ctrl+Alt+↑ e Ctrl+Alt+↓. Salve para ativar; funcionam também com
+            outra janela aberta.
+          </p>
+          <div id="sr-shortcuts" class="type-grid"></div>
+          <button id="save-sr-shortcuts">Salvar atalhos globais</button>
+          <p>
+            Funcionam com outro programa aberto e no modo jogo. Exemplos:
+            Ctrl+Alt+P ou Ctrl+Alt+F6. Deixe vazio para desativar.
+            Ctrl+Shift+F9/F10 são reservados.
+          </p>
+          <p id="sr-shortcuts-status" role="status"></p>
+        </details>
+        <details open>
+          <summary>
+            Pedidos SR · <span id="sr-request-count">0</span> aguardando
+          </summary>
+          <button id="sr-clear-requests">
+            Excluir todos os pedidos aguardando
+          </button>
+          <ol id="sr-queue"></ol>
+        </details>
+        <details open>
+          <summary>
+            Playlist de fundo · <span id="sr-playlist-count">0</span> músicas
+          </summary>
+          <button id="sr-clear-playlist">
+            Excluir toda a playlist aguardando
+          </button>
+          <ol id="sr-background-queue"></ol>
+          <button data-sr="save_playlist">Salvar playlist</button>
+          <button data-sr="restore_playlist">Recuperar última playlist</button>
+          <p>
+            A recuperação substitui a playlist aguardando e mantém a música
+            atual e os pedidos do chat.
+          </p>
+          <p>
+            Use ↑/↓ ou informe a posição para organizar manualmente. A ordem de
+            cada lista é independente; ordenar desativa o aleatório.
+          </p>
+        </details>
+        <details>
+          <summary>Diagnóstico do SR</summary>
+          <p>
+            Falhas e faixas puladas. Bloqueios de acesso e problemas na saída de
+            áudio precisam de correção.
+          </p>
+          <button id="sr-export-log">Exportar log do SR</button>
+          <ol
+            id="sr-diagnostics"
+            style="max-height: 240px; overflow: auto"
+          ></ol>
+        </details>
+        <details>
+          <summary>Histórico e estatísticas</summary>
+          <p id="sr-stats"></p>
+          <ol id="sr-history"></ol>
+          <button data-sr="limpar_historico">Limpar histórico do SR</button>
+        </details>
+        <details class="type-panel" open>
+          <summary>
+            Sessão do YouTube<span
+              >Login e cookies automáticos, sem importar arquivo</span
+            >
+          </summary>
+          <div class="type-content">
+            <p>
+              Abra a sessão dedicada do SR no Chrome/Edge e faça login no
+              YouTube se necessário. A sessão é reutilizada e sincronizada
+              automaticamente. Não é preciso procurar cookies ou cache em
+              pastas. Restrições do YouTube podem exigir nova autenticação ou
+              impedir algumas faixas.
+            </p>
+            <div class="feature-actions">
+              <button id="youtube-connect">Conectar YouTube</button
+              ><button id="youtube-test">Testar acesso sem tocar</button
+              ><button id="youtube-disconnect">Desconectar YouTube</button>
+            </div>
+            <p id="youtube-status" role="status"></p>
+          </div>
+        </details>
+        <details class="type-panel" open>
+          <summary>
+            Spotify: minhas credenciais<span
+              >Configure sua própria aplicação</span
+            >
+          </summary>
+          <div class="type-content">
+            <label
+              ><input id="spotify-enabled" type="checkbox" /> Exibir Spotify no
+              player e no widget</label
+            >
+            <label
+              >Client ID<input
+                id="spotify-client-id"
+                type="text"
+                autocomplete="off" /></label
+            ><label
+              >Client Secret (opcional; PKCE funciona sem ele)<input
+                id="spotify-client-secret"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Deixe vazio para manter o segredo salvo" /></label
+            ><label class="check-row"
+              ><input id="spotify-clear-secret" type="checkbox" /> Remover
+              segredo salvo e usar somente PKCE</label
+            ><label
+              >Redirect URI — copie exatamente<input
+                id="spotify-redirect"
+                type="text"
+                readonly
+            /></label>
+            <div class="feature-actions">
+              <button id="spotify-save">Salvar minhas credenciais</button
+              ><button id="spotify-connect">Conectar Spotify</button
+              ><button id="spotify-disconnect">Desconectar Spotify</button>
+            </div>
+            <p id="spotify-status" role="status"></p>
+            <p id="spotify-now"></p>
+            <p>
+              O Spotify publica a faixa nos HUDs; a reprodução continua no
+              aplicativo Spotify. A autorização e os tokens são renovados
+              automaticamente. O SR reproduz pedidos do YouTube, não baixa áudio
+              do Spotify.
+            </p>
+            <h3>Como obter e inserir os dados</h3>
+            <ol>
+              <li>
+                Abra o Spotify Developer Dashboard e entre com sua conta.
+                Aplicações em Development Mode exigem Premium do proprietário e
+                usuários autorizados no painel.
+              </li>
+              <li>
+                Crie uma aplicação, escolha Web API e cadastre o Redirect URI
+                mostrado acima. Use 127.0.0.1, não localhost.
+              </li>
+              <li>
+                Nas configurações da aplicação, copie o Client ID para o campo
+                desta aba. O fluxo PKCE de aplicativo desktop dispensa Client
+                Secret; o campo opcional permite guardar o seu, se utilizado.
+              </li>
+              <li>
+                Clique Salvar minhas credenciais, depois Conectar Spotify.
+                Autorize no navegador oficial e volte ao Kaia Chat.
+              </li>
+              <li>
+                Toque uma música no Spotify. A faixa aparecerá aqui e nos HUDs.
+                Não envie suas chaves ou tokens ao GitHub.
+              </li>
+            </ol>
+            <div class="feature-actions">
+              <button data-media-link="dashboard">Abrir painel Spotify</button
+              ><button data-media-link="spotifyDocs">Guia oficial</button
+              ><button data-media-link="spotifyVideo">
+                Vídeo: obter Client ID</button
+              ><button data-media-link="redirectVideo">
+                Vídeo: Redirect URI
+              </button>
+            </div>
+            <p>
+              Vídeos complementares em inglês podem mostrar uma interface
+              antiga. Para a URL e o fluxo atuais, siga este tutorial e o guia
+              oficial.
+            </p>
+          </div>
+        </details>
+        <details class="type-panel">
+          <summary>HUDs, editor e soundbar</summary>
+          <div class="type-content">
+            <label>HUD padrão<input id="sr-url" readonly /></label
+            ><label
+              >HUD personalizado<input id="sr-custom-url" readonly
+            /></label>
+            <div class="feature-actions">
+              <button data-sr-open="standard">Abrir HUD padrão</button
+              ><button data-sr-open="custom">Abrir HUD personalizado</button
+              ><button data-sr-open="editor">
+                Editor completo de HUD / CSS
+              </button>
+            </div>
+            <iframe
+              id="sr-preview"
+              title="Prévia do HUD SR"
+              sandbox="allow-scripts allow-same-origin"
+            ></iframe
+            ><label class="check-row"
+              ><input id="sr-loopback-enabled" type="checkbox" /> Medir áudio da
+              saída para soundbar</label
+            ><label
+              >Saída da soundbar<select id="sr-loopback-output">
+                <option value="">Saída padrão</option>
+              </select></label
+            ><button id="sr-loopback-save">Aplicar soundbar</button>
+            <p>
+              O medidor usa o áudio da saída selecionada. Outros sons no mesmo
+              dispositivo também podem aparecer. O editor preserva temas, CSS,
+              RGB e barras do pacote original.
+            </p>
+          </div>
+        </details>
+      </section>
+      <section id="widget-panel" hidden>
+        <h1>Widget para sua live</h1>
+        <p>
+          Adicione a URL como Fonte de navegador no OBS. Mantenha o Kaia Chat
+          aberto, mesmo com a janela oculta.
+        </p>
+        <details id="viewers-panel">
+          <summary>Contadores de espectadores — chat e OBS</summary>
+          <label
+            ><input id="viewer-enabled" type="checkbox" /> Ativar
+            contadores</label
+          >
+          <label
+            ><input id="viewer-showChat" type="checkbox" /> Mostrar no
+            chat</label
+          >
+          <label
+            ><input id="viewer-showOverlay" type="checkbox" /> Mostrar no modo
+            transparente</label
+          >
+          <label
+            >Posição no overlay<select id="viewer-position">
+              <option value="top">Superior</option>
+              <option value="bottom">Inferior</option>
+            </select></label
+          >
+          <label
+            >Atualização (segundos)<input
+              id="viewer-interval"
+              type="number"
+              min="30"
+              max="300"
+              value="30"
+          /></label>
+          <label
+            >Fonte (px)<input
+              id="viewer-fontSize"
+              type="number"
+              min="12"
+              max="48"
+              value="18"
+          /></label>
+          <label
+            >Cor<input id="viewer-color" type="color" value="#ffffff"
+          /></label>
+          <p>
+            Selecione abaixo quais plataformas incluir. Desmarcar não desconecta
+            o chat. O total soma as plataformas selecionadas e disponíveis, não
+            pessoas únicas. “—” significa sem dados; o total fica parcial quando
+            falta uma plataforma.
+          </p>
+          <p>
+            Twitch e Kick: cadastre uma aplicação no portal de desenvolvedores
+            da plataforma e informe Client ID e Client Secret. Não são seu login
+            e senha. As credenciais são protegidas pelo Windows e não vão para
+            os widgets. Consulte docs/CONTADORES.md no pacote.
+          </p>
+          <label
+            ><input id="viewer-showTotal" type="checkbox" /> Mostrar o total
+            junto às plataformas selecionadas</label
+          >
+          <div id="viewer-sources"></div>
+          <button id="save-viewers">Salvar e atualizar contadores</button>
+          <p id="viewer-status" role="status"></p>
+          <h3>Widgets para Fonte de navegador no OBS</h3>
+          <div id="viewer-urls" class="viewer-urls"></div>
+        </details>
+        <label>URL do widget<input id="widget-url" readonly /></label>
+        <div class="widget-actions">
+          <button id="copy-widget">Copiar URL</button
+          ><button id="popup-widget">Abrir pop-up</button>
+        </div>
+        <label
+          >Layout<select id="widget-layout">
+            <option value="classic">Clássico</option>
+            <option value="cards">Cartões</option>
+            <option value="compact">Compacto</option>
+            <option value="bubbles">Balões</option>
+            <option value="neon">Neon</option>
+            <option value="terminal">Terminal</option>
+            <option value="broadcast">Transmissão</option>
+          </select></label
+        >
+        <label
+          >Tamanho da fonte (px)<input
+            id="widget-font"
+            type="number"
+            min="12"
+            max="72"
+            value="24"
+        /></label>
+        <label
+          >Espaço entre mensagens<input
+            id="widget-gap"
+            type="range"
+            min="0"
+            max="60"
+        /></label>
+        <label
+          >Cantos arredondados<input
+            id="widget-radius"
+            type="range"
+            min="0"
+            max="80"
+        /></label>
+        <label>Cor de destaque<input id="widget-accent" type="color" /></label>
+        <label
+          >HTML de cada mensagem<textarea
+            id="widget-html"
+            rows="7"
+            maxlength="20000"
+            spellcheck="false"
+          ></textarea>
+        </label>
+        <button id="widget-starter">Começar HTML do zero</button>
+        <p>
+          Blocos disponíveis: data-slot="platform", data-slot="user",
+          data-slot="message". Use div, section, span e classes para organizar.
+          Scripts não são executados. Campos omitidos são acrescentados ao
+          final. HTML vazio usa o modelo padrão.
+        </p>
+        <label
+          >CSS personalizado<textarea
+            id="widget-css"
+            rows="9"
+            spellcheck="false"
+            placeholder=".message { border-radius: 12px; }"
+          ></textarea>
+        </label>
+        <p>
+          Seletores: #feed, .message, .user, .message-text, .platform e
+          [data-platform="kick"]. O tempo das mensagens segue a aba Chat. O CSS
+          e o HTML aparecem na prévia enquanto você edita. Salvar aplica ao OBS.
+        </p>
+        <button id="save-widget" class="primary">
+          Salvar widget e atualizar prévia
+        </button>
+        <p id="widget-status" role="status"></p>
+        <iframe
+          id="widget-preview"
+          title="Prévia do widget"
+          sandbox="allow-scripts allow-same-origin"
+        ></iframe>
+        <p>
+          Fundo transparente na transmissão. A URL permanece neste computador;
+          se a porta estiver ocupada por outro aplicativo, copie a nova URL para
+          o OBS. Sugestão de tamanho no OBS: 500 × 800.
+        </p>
+      </section>
+      <section id="setup">
+        <div class="intro">
+          <h1>Seus chats. Seu espaço.</h1>
+          <p>Escolha os canais e dê um som a cada comunidade.</p>
+        </div>
+        <details class="type-panel" id="transcript-panel" open>
+          <summary>
+            Backup do chat em TXT
+            <span>Histórico completo, mesmo quando some da tela</span>
+          </summary>
+          <div class="type-content">
+            <input
+              id="transcript-path"
+              type="text"
+              readonly
+              placeholder="Escolha onde salvar a transcrição"
+            /><button id="choose-transcript" class="secondary">
+              Escolher arquivo TXT…
+            </button>
+            <p id="transcript-status" role="status">
+              Escolha um TXT antes de conectar. As mensagens serão
+              acrescentadas, sem apagar o arquivo.
+            </p>
+            <p class="type-hint">
+              O backup inclui mensagens recebidas de todas as plataformas,
+              inclusive os nicks ocultos por Chats bloqueados. O fade só limpa a
+              tela.
+            </p>
+          </div>
+        </details>
+        <div id="platforms"></div>
+        <div class="appearance">
+          <label
+            >Fundo
+            <input
+              id="background"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05" /></label
+          ><label
+            >Texto
+            <input
+              id="fontSize"
+              type="range"
+              min="12"
+              max="36"
+              step="1" /></label
+          ><label class="toggle"
+            ><input type="checkbox" id="sounds" /> Sons de mensagens</label
+          >
+        </div>
+        <details class="type-panel" id="blocked-panel">
+          <summary>
+            Chats bloqueados
+            <span>Oculte mensagens e sons de nicks específicos</span>
+          </summary>
+          <div class="type-content">
+            <p class="type-hint">
+              Um nick por linha, ou separe por vírgulas. Aceita @ e ignora
+              maiúsculas/minúsculas. O bloqueio é apenas neste overlay.
+            </p>
+            <div id="blocked-fields" class="blocked-grid"></div>
+            <button id="save-blocked" class="secondary">
+              Salvar bloqueios
+            </button>
+            <p id="blocked-status" role="status"></p>
+          </div>
+        </details>
+        <details class="type-panel" id="timing-panel">
+          <summary>
+            Tempo das mensagens
+            <span>Chat fade time · mantenha o painel limpo</span>
+          </summary>
+          <div class="type-content">
+            <label class="check-row"
+              ><input id="expiry-enabled" type="checkbox" checked /> Remover
+              mensagens automaticamente</label
+            >
+            <div class="type-grid timing-fields">
+              <label
+                >Tempo na tela (segundos)<input
+                  id="expiry-seconds"
+                  type="number"
+                  min="1"
+                  max="86400"
+                  value="120"
+              /></label>
+              <label
+                >Duração do fade (segundos)<input
+                  id="expiry-fade"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value="2"
+              /></label>
+            </div>
+            <div class="presets">
+              <button data-expiry="30">30 segundos</button
+              ><button data-expiry="60">1 minuto</button
+              ><button data-expiry="120">2 minutos</button
+              ><button data-expiry="300">5 minutos</button>
+            </div>
+            <p id="expiry-summary" class="type-hint"></p>
+            <p class="type-hint">
+              Cada mensagem tem seu próprio relógio, contado a partir da
+              exibição. Desative para manter o histórico na tela.
+            </p>
+            <button id="save-timing" class="secondary">
+              Salvar temporizador
+            </button>
+            <p id="expiry-status" role="status"></p>
+          </div>
+        </details>
+        <details class="type-panel" id="type-panel">
+          <summary>
+            Fonte, cor e sombra <span>Personalize seu chat</span>
+          </summary>
+          <div class="type-content">
+            <div class="type-grid">
+              <label class="wide"
+                >Fonte instalada<select
+                  id="fontFamily"
+                  aria-label="Fonte do chat"
+                ></select></label
+              ><label
+                >Peso<select id="fontWeight">
+                  <option value="400">Normal</option>
+                  <option value="500">Médio</option>
+                  <option value="600">Seminegrito</option>
+                  <option value="700">Negrito</option>
+                  <option value="800">Extra negrito</option>
+                </select></label
+              ><label class="color-field"
+                >Cor do texto<input type="color" id="textColor" value="#f0f1f7"
+              /></label>
+            </div>
+            <label class="check-row"
+              ><input id="preserveNames" type="checkbox" checked /> Preservar as
+              cores dos nomes de usuário</label
+            >
+            <div class="presets">
+              <button data-preset="classic">Clássico</button
+              ><button data-preset="contrast">Alto contraste</button
+              ><button data-preset="neon">Neon suave</button>
+            </div>
+            <label class="check-row shadow-heading"
+              ><input id="shadowEnabled" type="checkbox" checked /> Sombra do
+              texto</label
+            >
+            <div class="type-grid">
+              <label class="color-field shadow-control"
+                >Cor da sombra<input
+                  type="color"
+                  id="shadowColor"
+                  value="#000000" /></label
+              ><label class="shadow-control"
+                >Intensidade <output data-value="shadowOpacity">85%</output
+                ><input
+                  id="shadowOpacity"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="85" /></label
+              ><label class="shadow-control"
+                >Desfoque <output data-value="shadowBlur">3 px</output
+                ><input
+                  id="shadowBlur"
+                  type="range"
+                  min="0"
+                  max="24"
+                  value="3" /></label
+              ><label class="shadow-control"
+                >Horizontal <output data-value="shadowX">0 px</output
+                ><input
+                  id="shadowX"
+                  type="range"
+                  min="-12"
+                  max="12"
+                  value="0" /></label
+              ><label class="shadow-control"
+                >Vertical <output data-value="shadowY">1 px</output
+                ><input id="shadowY" type="range" min="-12" max="12" value="1"
+              /></label>
+            </div>
+            <div class="chat-preview">
+              <span class="preview-label"
+                >PRÉVIA AO VIVO · <span id="size-value">18 px</span></span
+              >
+              <div class="preview-message">
+                <span class="platform">T</span
+                ><span class="user preview-twitch">PessoaTwitch: </span>Seu chat
+                com a sua identidade ✨
+              </div>
+              <div class="preview-message">
+                <span class="platform kick">K</span
+                ><span class="user preview-kick">PessoaKick: </span>Legível até
+                por cima do jogo 💚
+              </div>
+            </div>
+            <button id="save-style" class="secondary">Salvar aparência</button>
+            <p id="style-status" role="status"></p>
+            <p class="type-hint">
+              As fontes vêm do seu Windows. Em outro computador, fontes ausentes
+              usam Segoe UI.
+            </p>
+          </div>
+        </details>
+        <button class="primary" id="connect">Salvar e conectar</button>
+        <p id="error" role="alert"></p>
+        <p class="help">
+          Emotes nativos + 7TV, BTTV e FFZ públicos
+        </p>
+      </section>
+      <div class="toolbar">
+        <div class="statuses">
+          <span id="twitch-status">Twitch — aguardando</span
+          ><span id="kick-status">Kick — aguardando</span
+          ><span id="starvios-status">Starvios — aguardando</span
+          ><span id="custom-status">Personalizado — aguardando</span>
+        </div>
+        <button id="settings-toggle" title="Mostrar ou esconder configurações">
+          ⚙</button
+        ><button id="clear" title="Limpar mensagens">⌫</button
+        ><button
+          id="hide"
+          title="Modo jogo: somente chat transparente, com cliques passando para o jogo. Ctrl+Shift+F9 para configurar."
+          aria-label="Ativar chat transparente para jogar"
+        >
+          ◉
+        </button>
+      </div>
+      <section id="chat-player" aria-label="Player de música do SR">
+        <div class="mini-player-head">
+          <strong id="chat-sr-title">SR · nenhuma música</strong>
+          <div class="mini-player-buttons">
+            <button
+              id="chat-sr-prev"
+              title="Música anterior"
+              aria-label="Música anterior"
+            ></button
+            ><button
+              id="chat-sr-play"
+              title="Reproduzir ou pausar"
+              aria-label="Reproduzir música"
+            ></button
+            ><button
+              id="chat-sr-next"
+              title="Próxima música"
+              aria-label="Próxima música"
+            ></button
+            ><button
+              id="chat-sr-repeat"
+              title="Repetir"
+              aria-label="Repetir música"
+              aria-pressed="false"
+            ></button>
+          </div>
+        </div>
+        <div class="music-timeline">
+          <input
+            id="chat-sr-timeline"
+            type="range"
+            min="0"
+            max="1"
+            value="0"
+            step="0.1"
+            disabled
+            aria-label="Posição da música na aba Chat"
+          /><output id="chat-sr-time">0:00 / --:--</output>
+        </div>
+        <div class="music-volume">
+          <label for="chat-sr-volume">Volume das músicas</label>
+          <input
+            id="chat-sr-volume"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value="80"
+            aria-label="Volume das músicas"
+          />
+          <output
+            id="chat-sr-volume-value"
+            for="chat-sr-volume"
+            data-i18n-ignore
+            >80%</output
+          >
+        </div>
+        <p id="chat-sr-requester"></p>
+        <p id="chat-sr-status" role="status">Aguardando pedido !sr</p>
+        <p id="chat-reader-status" role="status">Leitor desativado</p>
+      </section>
+      <p id="chat-last-alert"></p>
+      <aside id="studio-playing" hidden aria-live="polite">
+        <strong id="studio-playing-label"></strong>
+        <div id="studio-preview"></div>
+        <button id="studio-stop">Parar alertas</button>
+      </aside>
+      <div
+        id="viewer-counter"
+        class="viewer-counters"
+        aria-live="polite"
+        hidden
+      ></div>
+      <section id="feed" aria-live="polite">
+        <div id="empty">
+          <span>✦</span>
+          <p>Seu chat aparece aqui</p>
+          <small>As novas mensagens entram em tempo real.</small>
+        </div>
+      </section>
+      <form id="studio-composer" data-i18n-ignore>
+        <details id="studio-output">
+          <summary id="studio-output-label">Twitch</summary>
+          <div class="studio-targets">
+            <label><input type="checkbox" value="twitch" checked /> Twitch</label>
+            <label><input type="checkbox" value="kick" /> Kick</label>
+            <label><input type="checkbox" value="youtube" /> YouTube</label>
+          </div>
+        </details>
+        <input id="studio-message" aria-label="Mensagem do chat" placeholder="Escreva no chat…" maxlength="500" required />
+        <button id="studio-send" type="submit">Enviar</button>
+        <output id="studio-send-status" role="status"></output>
+      </form>
+      <footer>
+        Ctrl+Shift+F9: configurar · Ctrl+Shift+F10: liberar/bloquear cliques
+      </footer>
+    </main>
+    <script src="i18n-data.js"></script>
+    <script src="i18n.js"></script>
+    <script src="i18n-ui.js"></script>
+    <script src="voices-ui.js"></script>
+    <script src="blocking.js"></script>
+    <script src="timing.js"></script>
+    <script src="blocked-ui.js"></script>
+    <script src="timing-ui.js"></script>
+    <script src="custom-ui.js"></script>
+    <script src="typography.js"></script>
+    <script src="renderer.js"></script>
+    <script src="widget-ui.js"></script>
+    <script src="display-ui.js"></script>
+    <script src="media-ui.js"></script>
+    <script src="player-ui.js"></script>
+    <script src="sr-settings-ui.js"></script>
+    <script src="alerts-ui.js"></script>
+    <script src="viewers-render.js"></script>
+    <script src="viewers-ui.js"></script>
+    <script src="studio-ui.js"></script>
+  </body>
+</html>

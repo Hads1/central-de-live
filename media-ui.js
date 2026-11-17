@@ -1,0 +1,496 @@
+(() => {
+  const el = (id) => document.getElementById(id);
+  let loaded,
+    diagnosing = false;
+  const readerKeys = [
+    'enabled',
+    'every',
+    'lowEvery',
+    'interval',
+    'maxWait',
+    'maxQueue',
+    'maxChars',
+    'voice',
+    'rate',
+    'volume',
+    'output',
+    'sayName',
+    'ignoreCommands',
+    'high',
+    'low',
+  ];
+  function readerValue() {
+    return Object.fromEntries(
+      readerKeys.map((key) => {
+        const input = el('reader-' + key);
+        return [key, input.type === 'checkbox' ? input.checked : input.value];
+      }),
+    );
+  }
+  function applyReader(value) {
+    for (const key of readerKeys) {
+      const input = el('reader-' + key);
+      if (input.type === 'checkbox') input.checked = !!value[key];
+      else if (Array.isArray(value[key])) input.value = value[key].join('\n');
+      else {
+        if (
+          input.tagName === 'SELECT' &&
+          value[key] &&
+          ![...input.options].some((o) => o.value === String(value[key]))
+        )
+          input.add(new Option(value[key], value[key]));
+        input.value = value[key];
+      }
+    }
+  }
+  function setOptions(id, values, empty) {
+    const select = el(id),
+      chosen = select.value;
+    select.replaceChildren(new Option(empty, ''));
+    for (const value of [...new Set(values)].filter(Boolean))
+      select.add(new Option(value, value));
+    if (chosen && !values.includes(chosen)) {
+      const option = new Option(
+        chosen +
+          (window.KaiaLocale?.translate(' · indisponível') ||
+            ' · indisponível'),
+        chosen,
+      );
+      option.dataset.i18nUnavailable = chosen;
+      select.add(option);
+    }
+    select.value = chosen;
+  }
+  async function diagnose() {
+    if (diagnosing) return;
+    diagnosing = true;
+    try {
+      const info = await window.kaia.diagnoseMedia();
+      const outputs = info.outputs.map((d) => d.nome).filter(Boolean);
+      setOptions('reader-output', outputs, 'Escolha uma saída de áudio');
+      setOptions('sr-output', outputs, 'Saída padrão do Windows');
+      setOptions('sr-loopback-output', info.loopbacks, 'Saída padrão');
+      el('media-device-status').textContent =
+        'Saídas de áudio atualizadas. Selecione a saída da leitura.';
+      if (!info.ffmpeg || !info.ffplay)
+        el('sr-status').textContent =
+          'FFmpeg incompleto; use a distribuição completa.';
+    } catch (error) {
+      el('reader-status').textContent = error.message;
+      el('sr-status').textContent = error.message;
+    } finally {
+      diagnosing = false;
+    }
+  }
+  async function task(kind, fn) {
+    try {
+      const result = await fn();
+      el(kind + '-status').textContent =
+        typeof result === 'string' ? result : 'Concluído.';
+      return result;
+    } catch (error) {
+      el(kind + '-status').textContent = error.message;
+    }
+  }
+  for (const tab of ['reader', 'sr'])
+    el('tab-' + tab).onclick = () => {
+      window.selectKaiaTab(tab);
+      diagnose();
+    };
+  window.kaia.load().then((s) => {
+    loaded = s;
+    applyReader(s.reader);
+    for (const key of [
+      'enabled',
+      'volume',
+      'output',
+      'repeat',
+      'shuffle',
+      'requestLimit',
+      'playlistLimit',
+      'announceRequests',
+    ]) {
+      const input = el('sr-' + key);
+      if (input.type === 'checkbox') input.checked = !!s.sr[key];
+      else {
+        if (key === 'output' && s.sr.output)
+          input.add(new Option(s.sr.output, s.sr.output));
+        input.value = s.sr[key];
+      }
+    }
+    syncMusicVolume(s.sr.volume);
+    el('spotify-client-id').value = s.spotify.clientId;
+    el('spotify-client-secret').placeholder = s.spotify.hasSecret
+      ? 'Segredo protegido já salvo; vazio mantém o atual'
+      : 'Opcional: recomendado usar PKCE sem segredo';
+    el('spotify-redirect').value = s.spotify.redirect;
+    el('sr-url').value = s.srUrl;
+    el('sr-custom-url').value = s.srCustomUrl;
+    el('sr-preview').src = s.srCustomUrl;
+    spotifyState(s.spotify);
+    el('youtube-status').textContent = s.youtubeSession
+      ? 'Sessão salva. Use Testar acesso para verificar a conexão atual.'
+      : 'Nenhuma sessão do SR salva. Se o YouTube exigir login, clique Conectar YouTube e entre na janela dedicada.';
+    if (s.srState) srState(s.srState);
+  });
+  el('refresh-devices').onclick = diagnose;
+  el('save-reader').onclick = () =>
+    task('reader', async () => {
+      const value = readerValue();
+      if (value.enabled && !value.output)
+        throw Error('Escolha a saída antes de ativar a leitura.');
+      applyReader(await window.kaia.saveReader(value));
+      return 'Leitura salva. As próximas mensagens seguirão este fluxo.';
+    });
+  el('reader-enabled').onchange = async () => {
+    if (el('reader-enabled').checked && !el('reader-output').value) {
+      el('reader-enabled').checked = false;
+      el('reader-status').textContent =
+        'Leitor não ativado: escolha a Saída da leitura primeiro.';
+      el('reader-output').focus();
+      return;
+    }
+    await el('save-reader').onclick();
+  };
+  for (const key of readerKeys.filter((key) => key !== 'enabled'))
+    el('reader-' + key).onchange = () => el('save-reader').onclick();
+  for (const action of ['test', 'clear', 'stop'])
+    el('reader-' + action).onclick = () =>
+      task('reader', async () => {
+        if (action === 'test') {
+          if (!el('reader-output').value)
+            throw Error('Escolha a Saída da leitura antes de testar a voz.');
+          await window.kaia.saveReader(readerValue());
+        }
+        const result = await window.kaia.readerAction(action);
+        if (action === 'stop') el('reader-enabled').checked = false;
+        return result;
+      });
+  let volumePending = null,
+    volumeBusy = false,
+    volumeTimer;
+  async function sendVolume() {
+    clearTimeout(volumeTimer);
+    volumeTimer = null;
+    if (volumeBusy || volumePending === null) return;
+    volumeBusy = true;
+    const value = volumePending;
+    volumePending = null;
+    try {
+      await window.kaia.srAction('set_volume', [value]);
+    } catch (error) {
+      el('sr-status').textContent = error.message;
+      el('chat-sr-status').textContent = error.message;
+    } finally {
+      volumeBusy = false;
+      if (volumePending !== null) volumeTimer = setTimeout(sendVolume, 40);
+    }
+  }
+  function syncMusicVolume(value) {
+    const volume = Math.max(0, Math.min(100, Number(value) || 0));
+    for (const id of ['sr-volume', 'chat-sr-volume']) el(id).value = volume;
+    el('chat-sr-volume-value').textContent = volume + '%';
+  }
+  for (const id of ['sr-volume', 'chat-sr-volume']) {
+    const input = el(id);
+    input.oninput = () => {
+      syncMusicVolume(input.value);
+      volumePending = Number(input.value);
+      if (!volumeTimer) volumeTimer = setTimeout(sendVolume, 40);
+    };
+    input.onchange = () => {
+      input.oninput();
+      sendVolume();
+    };
+  }
+  el('save-sr').onclick = () =>
+    task('sr', async () => {
+      await window.kaia.saveSR({
+        enabled: el('sr-enabled').checked,
+        volume: el('sr-volume').value,
+        output: el('sr-output').value,
+        repeat: el('sr-repeat').value,
+        shuffle: el('sr-shuffle').checked,
+        requestLimit: el('sr-requestLimit').value,
+        playlistLimit: el('sr-playlistLimit').value,
+        announceRequests: el('sr-announceRequests').checked,
+      });
+      return (
+        'SR salvo. ' +
+        (el('sr-enabled').checked
+          ? 'Pedidos !sr ativos.'
+          : 'Pedidos das lives desativados.')
+      );
+    });
+  for (const button of document.querySelectorAll('[data-sr]'))
+    button.onclick = () =>
+      task('sr', () => window.kaia.srAction(button.dataset.sr, []));
+  el('sr-export-log').onclick = () =>
+    task('sr', () => window.kaia.srAction('export-log', []));
+  el('sr-test-audio').onclick = () =>
+    task('sr-audio', async () => {
+      await window.kaia.saveSR({
+        enabled: el('sr-enabled').checked,
+        volume: el('sr-volume').value,
+        output: el('sr-output').value,
+        repeat: el('sr-repeat').value,
+        shuffle: el('sr-shuffle').checked,
+      });
+      return window.kaia.srAction('test-audio', []);
+    });
+  el('sr-request').onclick = () =>
+    task('sr', () =>
+      window.kaia.srAction('pedir', ['Operador', el('sr-query').value]),
+    );
+  el('sr-playlist-add').onclick = () =>
+    task('sr', () =>
+      window.kaia.srAction('adicionar_playlist', [
+        el('sr-playlist').value,
+        'Operador',
+        el('sr-playlistLimit').value,
+      ]),
+    );
+  el('sr-seek-go').onclick = () =>
+    task('sr', () =>
+      window.kaia.srAction('seek', [
+        Math.max(0, Number(el('sr-seek').value) || 0),
+      ]),
+    );
+  let lastSRState = {};
+  function srState(s) {
+    if (
+      Number.isFinite(s.volume) &&
+      !volumeBusy &&
+      volumePending === null &&
+      !['sr-volume', 'chat-sr-volume'].includes(document.activeElement?.id)
+    )
+      syncMusicVolume(s.volume);
+    s = { ...lastSRState, ...s };
+    lastSRState = s;
+    el('sr-now').toggleAttribute(
+      'data-i18n-ignore',
+      !!(s.titulo || s.fila?.[0]?.titulo),
+    );
+    window.KaiaMiniPlayer?.update(s);
+    el('sr-now').textContent =
+      (s.titulo
+        ? s.titulo + (s.user ? ' · solicitado por ' + s.user : '')
+        : '') ||
+      (s.fila?.[0]?.titulo
+        ? 'Pedido: ' + s.fila[0].titulo
+        : 'Nenhuma música em reprodução');
+    el('sr-mute').textContent = s.mutado ? 'Ativar som do SR' : 'Silenciar SR';
+    el('sr-mute').setAttribute('aria-pressed', String(!!s.mutado));
+    el('sr-mute').title = s.mutado
+      ? 'O SR está no mudo, independentemente do volume salvo.'
+      : 'Silenciar apenas a música';
+    el('sr-progress').textContent = s.tempo || '';
+    if (s.erro) el('sr-status').textContent = s.erro;
+    function rows(id, items, action) {
+      const list = el(id);
+      const signature = JSON.stringify(items || []);
+      if (list.dataset.signature === signature) return;
+      list.dataset.signature = signature;
+      list.replaceChildren();
+      (items || []).forEach((item, index) => {
+        const row = document.createElement('li'),
+          text = document.createElement('span'),
+          remove = document.createElement('button');
+        text.textContent = `${item.user || ''}: ${item.titulo || item.q || ''}${item.status ? ' · ' + item.status : ''}`;
+        text.dataset.i18nIgnore = '';
+        remove.textContent = 'Remover';
+        remove.onclick = () =>
+          task('sr', () => window.kaia.srAction(action, [index]));
+        row.append(text, remove);
+        list.append(row);
+      });
+    }
+    function queueRows(id, group) {
+      const list = el(id);
+      if (list._queueSource === s.fila && list._queuePage === list.dataset.page)
+        return;
+      list._queueSource = s.fila;
+      const items = (s.fila || []).filter(
+        (x) => (x.fonte === 'playlist') === (group === 'playlist'),
+      );
+      const page = Math.min(
+        Number(list.dataset.page || 0),
+        Math.max(0, Math.ceil(items.length / 100) - 1),
+      );
+      list.dataset.page = page;
+      list._queuePage = list.dataset.page;
+      const start = page * 100;
+      const signature = JSON.stringify([page, items]);
+      if (list.dataset.signature === signature) return;
+      list.dataset.signature = signature;
+      list.replaceChildren();
+      if (items.length > 100) {
+        const navigation = document.createElement('li');
+        for (const [symbol, delta] of [
+          ['←', -1],
+          ['→', 1],
+        ]) {
+          const button = document.createElement('button');
+          button.textContent = symbol;
+          button.disabled =
+            delta < 0 ? page === 0 : start + 100 >= items.length;
+          button.onclick = () => {
+            list.dataset.page = page + delta;
+            srState(s);
+          };
+          navigation.append(button);
+        }
+        const count = document.createElement('span');
+        count.dataset.i18nIgnore = '';
+        count.textContent =
+          start +
+          1 +
+          '–' +
+          Math.min(start + 100, items.length) +
+          ' / ' +
+          items.length;
+        navigation.append(count);
+        list.append(navigation);
+      }
+      items.slice(start, start + 100).forEach((item, offset) => {
+        const index = start + offset;
+        const row = document.createElement('li'),
+          text = document.createElement('span');
+        text.textContent = `${index + 1}. ${item.user || ''}: ${item.titulo || ''} · ${item.status || ''}${item.erro ? ' · ' + item.erro : ''}`;
+        text.dataset.i18nIgnore = '';
+        row.append(text);
+        const button = (label, op, target) => {
+          const b = document.createElement('button');
+          b.textContent = label;
+          b.onclick = () =>
+            task('sr', () =>
+              window.kaia.srAction('edit_queue', [group, op, item.key, target]),
+            );
+          row.append(b);
+        };
+        button('↑', 'move', index - 1);
+        button('↓', 'move', index + 1);
+        button('Excluir', 'remove', 0);
+        const position = document.createElement('input');
+        position.type = 'number';
+        position.min = 1;
+        position.max = items.length;
+        position.value = index + 1;
+        position.setAttribute('aria-label', 'Posição de ' + item.titulo);
+        position.className = 'queue-position';
+        row.append(position);
+        const move = document.createElement('button');
+        move.textContent = 'Mover';
+        move.onclick = () =>
+          task('sr', () =>
+            window.kaia.srAction('edit_queue', [
+              group,
+              'move',
+              item.key,
+              Number(position.value) - 1,
+            ]),
+          );
+        row.append(move);
+        list.append(row);
+      });
+    }
+    queueRows('sr-queue', 'sr');
+    queueRows('sr-background-queue', 'playlist');
+    el('sr-request-count').textContent =
+      s.request_count ??
+      (s.fila || []).filter((x) => x.fonte !== 'playlist').length;
+    el('sr-playlist-count').textContent =
+      s.playlist_count ??
+      (s.fila || []).filter((x) => x.fonte === 'playlist').length;
+    if (s.playlist_job?.message)
+      el('sr-playlist-job').textContent = s.playlist_job.message;
+    const diagnostics = el('sr-diagnostics');
+    if (diagnostics) {
+      const events = s.diagnostics?.events || [];
+      const signature = JSON.stringify(events);
+      if (diagnostics.dataset.signature !== signature) {
+        diagnostics.dataset.signature = signature;
+        diagnostics.replaceChildren();
+        for (const event of events.slice().reverse()) {
+          const row = document.createElement('li');
+          row.dataset.i18nIgnore = '';
+          row.textContent =
+            new Date(event.at * 1000).toLocaleTimeString() +
+            ' · ' +
+            event.event +
+            (event.position ? ' · #' + event.position : '') +
+            (event.title ? ' · ' + event.title : '') +
+            (event.reason ? ' · ' + event.reason : '');
+          diagnostics.append(row);
+        }
+      }
+    }
+    rows('sr-history', s.historico, 'apagar_historico');
+    el('sr-stats').textContent = s.stats ? JSON.stringify(s.stats) : '';
+  }
+  function spotifyState(s) {
+    el('spotify-enabled').checked = s.enabled === true;
+    const current = s.current || {};
+    el('spotify-now').textContent = current.titulo
+      ? `${current.titulo} · ${current.artista || ''} · ${current.estado || ''}`
+      : s.connected
+        ? 'Spotify autorizado; aguardando música.'
+        : 'Spotify ainda não autorizado.';
+    el('spotify-now').toggleAttribute('data-i18n-ignore', !!current.titulo);
+  }
+  window.kaia.on('sr-state', srState);
+  window.kaia.on('sr-order-manual', () => (el('sr-shuffle').checked = false));
+  window.kaia.on('spotify-state', spotifyState);
+  el('spotify-enabled').onchange = async () => {
+    try {
+      spotifyState(
+        await window.kaia.spotifyAction(
+          'enabled',
+          el('spotify-enabled').checked,
+        ),
+      );
+    } catch (error) {
+      el('spotify-status').textContent = error.message;
+      spotifyState(await window.kaia.spotifyAction('info'));
+    }
+  };
+  window.kaia.on('media-status', (s) => {
+    const target = el(s.kind + '-status');
+    if (target) target.textContent = s.text;
+  });
+  el('spotify-save').onclick = () =>
+    task('spotify', async () => {
+      const result = await window.kaia.spotifyAction('save', {
+        clientId: el('spotify-client-id').value,
+        clientSecret: el('spotify-client-secret').value,
+        clearSecret: el('spotify-clear-secret').checked,
+      });
+      el('spotify-client-secret').value = '';
+      el('spotify-clear-secret').checked = false;
+      spotifyState(result);
+      return 'Credenciais protegidas neste computador. Clique Conectar Spotify.';
+    });
+  for (const action of ['connect', 'disconnect'])
+    el('spotify-' + action).onclick = () =>
+      task('spotify', async () => {
+        const result = await window.kaia.spotifyAction(action);
+        spotifyState(result);
+        return action === 'connect'
+          ? 'Autorize no navegador e volte ao Kaia Chat.'
+          : 'Spotify desconectado.';
+      });
+  for (const action of ['connect', 'test', 'disconnect'])
+    el('youtube-' + action).onclick = () =>
+      task('youtube', () => window.kaia.youtubeAction(action));
+  for (const button of document.querySelectorAll('[data-media-link]'))
+    button.onclick = () => window.kaia.mediaLink(button.dataset.mediaLink);
+  for (const button of document.querySelectorAll('[data-sr-open]'))
+    button.onclick = () => window.kaia.srOpen(button.dataset.srOpen);
+  el('sr-loopback-save').onclick = () =>
+    task('sr', () =>
+      window.kaia.srLoopback({
+        enabled: el('sr-loopback-enabled').checked,
+        device: el('sr-loopback-output').value,
+      }),
+    );
+})();

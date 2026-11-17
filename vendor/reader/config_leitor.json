@@ -1,0 +1,21 @@
+{
+  "kick": {
+    "enabled": true,
+    "channel": ""
+  },
+  "twitch": {
+    "enabled": true,
+    "channel": ""
+  },
+  "starvios": {
+    "enabled": false,
+    "channel": ""
+  },
+  "saida": "",
+  "voice": "pt-BR-FranciscaNeural",
+  "rate": "+0%",
+  "volume": "+0%",
+  "intervalo_segundos": 5,
+  "ignorar_comandos": true,
+  "ignorados": []
+}

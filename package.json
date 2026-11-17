@@ -1,0 +1,26 @@
+{
+  "name": "central-de-live",
+  "version": "0.1.0-test.5",
+  "description": "Chat, SR e automações para transmissões ao vivo",
+  "main": "main.js",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test.js viewers.test.js",
+    "smoke": "electron . --smoke-test",
+    "live": "node live-test.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "package": "node scripts/package.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^42.0.0",
+    "prettier": "^3.9.10"
+  },
+  "productName": "Central de Live",
+  "private": true,
+  "author": "Hads"
+}
