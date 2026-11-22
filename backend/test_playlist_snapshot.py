@@ -52,4 +52,18 @@ class PlaylistTests(unittest.TestCase):
             self.assertEqual(p.fila[0]['titulo'],'keep')
 
 
+    def test_select_file_accepts_bom_and_rejects_other_json_without_mutating_queue(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target=Path(folder)/'playlist.json'
+            p=Player();p.fila=[track('A')]
+            save_playlist(p,target)
+            target.write_text('\ufeff'+target.read_text(encoding='utf-8'),encoding='utf-8')
+            restored=Player()
+            restore_playlist(restored,target)
+            self.assertEqual(restored.fila[0]['titulo'],'A')
+            for content in ('[]','{bad json','{"version":1,"tracks":[{}]}'):
+                target.write_text(content,encoding='utf-8')
+                with self.assertRaises(ValueError):restore_playlist(restored,target)
+                self.assertEqual(restored.fila[0]['titulo'],'A')
+
 if __name__=='__main__':unittest.main()

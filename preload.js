@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('kaia', {
         'studio-state',
         'studio-platform',
         'studio-kick-rewards',
+        'studio-chat-automation',
         'studio-alert',
         'studio-automation-error',
         'viewers',

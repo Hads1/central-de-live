@@ -9,6 +9,21 @@ module.exports = async (win, app, emit, config, transcript) => {
     return image;
   }
   try {
+    const organization = await win.webContents.executeJavaScript(`(() => {
+      const locations = {'activity-starvios-connect':'studio','activity-kick-subscribe':'studio','spotify-connect':'studio','youtube-connect':'studio','studio-save':'rewards','studio-copy-obs-audio':'widget','automation-member-save':'permissions','automation-vote-save':'sr','automation-timer-save':'automation','message-templates':'alerts','alert-sources':'reader','viewer-sources':'counters','viewer-twitch-secret':'studio'};
+      for (const [id, page] of Object.entries(locations)) {
+        const el = document.getElementById(id);
+        if (!el || el.closest('section[id$="-panel"]')?.id !== page + '-panel') throw Error('Controle fora da página: ' + id);
+      }
+      for (const page of ['studio','rewards','alerts','automation','permissions','sr','reader','widget','counters','guide']) {
+        document.getElementById('tab-' + page).click();
+        if (document.getElementById(page + '-panel').hidden || document.querySelectorAll('main > section[id$="-panel"]:not([hidden])').length !== 1) throw Error('Navegação inválida: ' + page);
+      }
+      document.getElementById('tab-chat').click();
+      const ids = [...document.querySelectorAll('[id]')].map(el => el.id);
+      if (new Set(ids).size !== ids.length) throw Error('IDs duplicados');
+      return true;
+    })()`);
     const initial = await win.webContents.executeJavaScript(
       `({rows:document.querySelectorAll('.message').length,fresh:['twitch','kick','starvios','custom'].every(p=>document.getElementById(p+'-channel').value===''),starvios:!!document.getElementById('starvios-sound'),custom:!!document.getElementById('custom-url'),fonts:document.querySelector('#fontFamily').options.length})`,
     );
@@ -808,6 +823,7 @@ module.exports = async (win, app, emit, config, transcript) => {
           JSON.stringify({ viewersNormal, viewersOverlay, viewersWidgets }),
       );
     const result = {
+      organization,
       volumeKeys,
       viewers: {
         normal: viewersNormal,
@@ -816,6 +832,7 @@ module.exports = async (win, app, emit, config, transcript) => {
         selection: viewersSelection,
       },
       passed:
+        organization &&
         playlistSizing &&
         playlistPaging &&
         localeTests.passed &&

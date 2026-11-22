@@ -198,7 +198,7 @@
     showKickRewardLink();
   };
   const destinations = [...$('output').querySelectorAll('input')];
-  const platformName = { twitch: 'Twitch', kick: 'Kick', youtube: 'YouTube' };
+  const platformName = { twitch: 'Twitch', kick: 'Kick', youtube: 'YouTube', starvios: 'Starvios' };
   function updateDestinations() {
     const names = destinations.filter((input) => input.checked).map((input) => platformName[input.value]);
     $('output-label').textContent = names.length > 1 ? names.length + ' destinos' : names[0] || 'Destinos';
@@ -345,17 +345,6 @@
     await invoke('testObsAlertAudio');
     setStatus('feedback', 'Teste enviado à fonte de áudio do OBS.');
   });
-  bind('command-create', async () => {
-    await invoke('createCommand', {
-      name: $('command-name').value, trigger: $('command-trigger').value, text: $('command-response').value,
-    });
-    for (const id of ['name', 'trigger', 'response']) $('command-' + id).value = '';
-    $('collection').value = 'commands';
-    $('search').value = '';
-    await refreshAutomations();
-    setStatus('feedback', 'Comando criado.');
-  });
-
   let requestNumber = 0;
   async function refreshAutomations() {
     const request = ++requestNumber;

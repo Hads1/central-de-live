@@ -193,6 +193,10 @@ function decorated() {
   };
 }
 function emit(type, data) {
+  if (type === 'sr-state' && Object.hasOwn(data, 'current_track_key')) {
+    const identity = data.current_track_key;
+    if (identity !== emit.lastSong) { emit.lastSong = identity; studio?.resetSkipVotes(); }
+  }
   if (type === 'settings' && 'overlay' in data && win && !win.isDestroyed()) {
     win.setOverlayMode(data.overlay);
     win.setTitleBarOverlay(
@@ -209,6 +213,7 @@ function emit(type, data) {
     return;
   if (win && !win.isDestroyed()) win.webContents.send(type, data);
   widgetServer.event(type, data);
+  if (type === 'message') studio?.receiveMessage(data);
   if (!data.redemption) media?.receive(type, data);
 }
 app.whenReady().then(async () => {
@@ -299,6 +304,8 @@ app.whenReady().then(async () => {
     emit,
     widgetServer,
     smoke,
+    templateMessage: (id, values) => studio?.templateMessage(id, values),
+    announceChat: (item, targets) => studio?.announceSong(item, targets),
   });
   win.setMaximizable(true);
   displayMode = {
@@ -352,6 +359,7 @@ app.whenReady().then(async () => {
     },
     automationOutputs: () => media.automationOutputs(),
     automationAudio: (action, data) => media.automationAudio(action, data),
+    controlSR: (action, args) => media.controlSR(action, args),
     refreshViewers: () => {
       if (smoke || !studio) return;
       const channels = ['twitch', 'kick', 'youtube'].map((platform) => studio.viewerSession(platform)?.channel || '').join('|');
@@ -359,6 +367,7 @@ app.whenReady().then(async () => {
       viewerConnections = channels;
       viewerMonitor.configure(settings);
     },
+    getStarviosChannel: () => settings.starvios?.channel || '',
     saveStarvios: (value) => {
       const name = channel(String(value || '').replace(
         /^https?:\/\/(?:www\.)?starvios\.com\/(?:popout\/chat\/)?/i, '',

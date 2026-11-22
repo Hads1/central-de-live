@@ -14,7 +14,7 @@
       legend = document.createElement('legend');
     legend.textContent = name;
     group.append(legend);
-    const input = (key, label, type = 'text') => {
+    const input = (key, label, type = 'text', target = group) => {
       const l = document.createElement('label');
       l.textContent = label;
       const e = document.createElement('input');
@@ -22,7 +22,7 @@
       e.id = 'viewer-' + p + '-' + key;
       e.autocomplete = 'off';
       l.append(e);
-      group.append(l);
+      target.append(l);
     };
     input(
       'enabled',
@@ -35,12 +35,16 @@
     group.append(diagnostic);
     input('logo', 'Logo do canal/plataforma — URL HTTPS opcional');
     if (['twitch', 'kick'].includes(p)) {
-      input('clientId', 'Client ID alternativo para uso sem conta vinculada');
-      input('secret', 'Client Secret alternativo — vazio mantém o salvo', 'password');
-      input('forget', 'Excluir credencial salva', 'checkbox');
+      const credentialsGroup = document.createElement('fieldset');
+      const title = document.createElement('legend'); title.textContent = name;
+      credentialsGroup.append(title);
+      $('viewer-account-credentials').append(credentialsGroup);
+      input('clientId', 'Client ID alternativo para uso sem conta vinculada', 'text', credentialsGroup);
+      input('secret', 'Client Secret alternativo — vazio mantém o salvo', 'password', credentialsGroup);
+      input('forget', 'Excluir credencial salva', 'checkbox', credentialsGroup);
       const status = document.createElement('p');
       status.id = 'viewer-' + p + '-auth';
-      group.append(status);
+      credentialsGroup.append(status);
     }
     if (p === 'custom') {
       input('apiUrl', 'API JSON do contador (HTTPS ou HTTP local)');

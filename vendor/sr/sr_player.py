@@ -1139,6 +1139,12 @@ class SongRequest:
             return x.get("status") == "ok" and (x.get("stream") or x.get("arquivo") or x.get("id"))
 
         for i, x in enumerate(self.fila):
+            if x.get('_promoted'):
+                if _pronto(x):
+                    x.pop('_promoted',None)
+                    return self.fila.pop(i)
+                return None
+        for i, x in enumerate(self.fila):
             if self._eh_sr(x) and _pronto(x):
                 return self.fila.pop(i)
         if any(self._eh_sr(x) and x.get("status") in ("fila", "busca", "baixa", "stream") for x in self.fila):
@@ -1232,6 +1238,27 @@ class SongRequest:
         self.request_limit=max(1,min(500,int(requests)))
         self.playlist_limit=max(0,int(playlist))
         return 'Limites atualizados; músicas já aceitas foram preservadas.'
+
+    def promote(self, selection):
+        selection=str(selection).strip()
+        if not selection:raise ValueError('Informe o número ou o nome da música.')
+        with self._lock:
+            rows=[x for x in self.fila if x.get('status') not in ('erro','skipped')]
+            if selection.isdigit():
+                index=int(selection)-1
+                if index<0 or index>=len(rows):raise ValueError('Número fora da fila.')
+                chosen=rows[index]
+            else:
+                exact=[x for x in rows if str(x.get('titulo') or '').casefold()==selection.casefold()]
+                matches=exact or [x for x in rows if selection.casefold() in str(x.get('titulo') or '').casefold()]
+                if not matches:raise ValueError('Música não encontrada na fila.')
+                if len(matches)>1:raise ValueError('Há várias músicas com esse nome. Informe um nome mais específico.')
+                chosen=matches[0]
+            for item in self.fila:item.pop('_promoted',None)
+            chosen['_promoted']=True
+            self.fila.remove(chosen)
+            self.fila.insert(0,chosen)
+            return 'Próxima música: '+str(chosen.get('titulo') or selection)
 
     def edit_queue(self, group, operation, key='', target=0):
         if group not in ('sr','playlist'):raise ValueError('Fila inválida.')

@@ -64,6 +64,10 @@ class WidgetServer {
   }
   request(req, res) {
     const route = req.url?.split('?')[0];
+    if (route === '/integrations/kick/events' && this.kickEvents) {
+      void this.kickEvents(req, res);
+      return;
+    }
     const prefix = `/${this.token}/`;
     const overlay = route?.startsWith(prefix + 'alerts/') ? this.alertOverlay :
       route?.startsWith(prefix + 'alert-audio/') ? this.alertAudio : null;

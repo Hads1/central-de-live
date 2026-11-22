@@ -23,7 +23,7 @@ const providers = {
     token: 'https://id.kick.com/oauth/token',
     portal: 'https://kick.com/settings/developer',
     base: KICK,
-    scopes: 'channel:read chat:write user:read channel:rewards:read channel:rewards:write',
+    scopes: 'channel:read chat:write user:read events:subscribe channel:rewards:read channel:rewards:write',
     host: 'localhost',
     port: 19350,
     callback: '/central/kick',
@@ -63,9 +63,9 @@ const providers = {
 };
 
 class StreamingAccount {
-  constructor({ provider, store, open, update, message }) {
+  constructor({ provider, store, open, update, message, activity = () => {} }) {
     this.provider = providers[provider];
-    Object.assign(this, { store, open, update, message });
+    Object.assign(this, { store, open, update, message, activity });
     this.status = 'Desconectado';
     this.generation = 0;
     this.saved = {};
@@ -255,13 +255,18 @@ class StreamingAccount {
       const result = await this.api('liveChat/messages?' + query);
       if (generation !== this.generation) return;
       for (const item of result.items || []) {
-        if (item.snippet?.type !== 'textMessageEvent') continue;
+
         if (this.seen?.has(item.id)) continue;
         this.seen ||= new Set();
         this.seen.add(item.id);
         if (this.seen.size > 2000) this.seen.delete(this.seen.values().next().value);
+        if (['newSponsorEvent', 'memberMilestoneChatEvent', 'giftMembershipReceivedEvent'].includes(item.snippet?.type)) {
+          this.activity({platform: 'youtube', kind: 'subscription', id: item.id, channel: this.account.name, user: item.authorDetails?.displayName, historical: !this.cursor});
+        }
+        if (item.snippet?.type !== 'textMessageEvent') continue;
         this.message({ id: item.id, user: item.authorDetails?.displayName || 'YouTube',
-          login: item.authorDetails?.displayName, text: item.snippet.displayMessage, historical: !this.cursor });
+          login: item.authorDetails?.channelId, userId: item.authorDetails?.channelId,
+          text: item.snippet.displayMessage, historical: !this.cursor });
       }
       this.cursor = result.nextPageToken;
       interval = Math.max(5000, result.pollingIntervalMillis || 0);

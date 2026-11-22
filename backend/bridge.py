@@ -39,7 +39,14 @@ def command(action,args):
     global LAST_STATE,CHAT_STOP
     if action in ('save_playlist','restore_playlist'):
         from playlist_snapshot import save_playlist,restore_playlist
+        if PLAYLIST_JOB['busy']:raise ValueError('Aguarde a importação da playlist terminar antes de salvar ou recuperar.')
         return (save_playlist if action=='save_playlist' else restore_playlist)(player(),DATA/'saved-playlist.json')
+    if action=='select_playlist':
+        from playlist_snapshot import restore_playlist,save_playlist
+        if PLAYLIST_JOB['busy']:raise ValueError('Aguarde a importação da playlist terminar antes de abrir outra.')
+        result=restore_playlist(player(),Path(args['path']))
+        save_playlist(player(),DATA/'saved-playlist.json')
+        return result
     if action=='diagnose':
         import audio_out
         outputs=audio_out.listar_saidas()
@@ -50,7 +57,8 @@ def command(action,args):
         if lock and not lock.acquire(timeout=.05):return {**LAST_STATE,'busy':True,'playlist_job':dict(PLAYLIST_JOB)}
         try:
             LAST_STATE=PLAYER.estado()
-            result={**LAST_STATE,'playlist_job':dict(PLAYLIST_JOB)}
+            result={**LAST_STATE,'playlist_job':dict(PLAYLIST_JOB),
+                    'current_track_key':(PLAYER.atual or {}).get('key') if getattr(PLAYER,'atual',None) else ''}
             if isinstance(args,list) and args and args[0]==result.get('queue_revision'):
                 for key in ('fila','fila_voz','fila_sr','fila_pl'):result.pop(key,None)
             return result
@@ -170,6 +178,7 @@ def command(action,args):
         import sr_loopback
         sr_loopback.parar();return True
     allowed={'pedir','play_pause','retry','stop','skip','prev','seek','set_volume','set_saida','mute_toggle','set_repeat','set_shuffle','limpar','remover_fila','limpar_historico','apagar_historico','set_limits','edit_queue','play','pause'}
+    if action=='promote':return player().promote(*args)
     if action in ('play','pause'):
         p=player()
         if (action=='play' and p.paused) or (action=='pause' and not p.paused and p.atual):return p.play_pause()

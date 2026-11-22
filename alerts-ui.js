@@ -100,6 +100,31 @@
     el('last-alert').textContent = text;
     el('chat-last-alert').textContent = 'Último alerta · ' + text;
   }
+  const examples = {usuario: 'João', musica: 'Música de exemplo', recompensa: 'Hidrate', pontos: 500, comando: '!skip', votos: 2, necessarios: 3, erro: 'Nenhuma música na fila', plataforma: 'Twitch', canal: 'Seu canal'};
+  function templateRows(rows) {
+    el('message-templates').replaceChildren();
+    for (const item of rows) {
+      const box = document.createElement('fieldset');
+      const label = document.createElement('label');
+      const enabled = document.createElement('input'); enabled.type = 'checkbox'; enabled.checked = item.enabled;
+      label.append(enabled, ' ' + item.label);
+      const text = document.createElement('textarea'); text.value = item.text; text.maxLength = 500; text.setAttribute('aria-label', item.label);
+      const variables = document.createElement('p'); variables.textContent = 'Variáveis: ' + item.variables.map(key => '{' + key + '}').join(', ');
+      const preview = document.createElement('p');
+      const update = () => preview.textContent = 'Prévia: ' + text.value.replace(/\{([a-z_]+)\}/gi, (token, key) => String(examples[key] ?? token));
+      text.oninput = update; update();
+      box.append(label, text, variables, preview);
+      box.read = () => ({id: item.id, text: text.value, enabled: enabled.checked});
+      el('message-templates').append(box);
+    }
+  }
+  window.kaia.studio('messageTemplates').then(templateRows).catch(e => el('message-templates-status').textContent = e.message);
+  el('save-message-templates').onclick = async () => {
+    try {
+      templateRows(await window.kaia.studio('saveMessageTemplates', {rows: Array.from(el('message-templates').children).map(box => box.read())}));
+      el('message-templates-status').textContent = 'Mensagens salvas. As próximas ocorrências usarão estes textos.';
+    } catch(e) { el('message-templates-status').textContent = e.message; }
+  };
   el('tab-alerts').onclick = () => window.selectKaiaTab('alerts');
   el('add-alert-source').onclick = () => row();
   el('save-alerts').onclick = async () => {

@@ -20,8 +20,8 @@ function post(endpoint, fields) {
 }
 
 class Twitch {
-  constructor({ store, update, chat, redemption }) {
-    Object.assign(this, { store, update, chat, redemption });
+  constructor({ store, update, chat, redemption, activity = () => {} }) {
+    Object.assign(this, { store, update, chat, redemption, activity });
     this.status = 'Desconectada';
     this.chatReady = false;
     this.generation = 0;
@@ -44,7 +44,7 @@ class Twitch {
     if (this.credentials) throw Error('Desconecte a conta atual antes de conectar outra.');
     this.stop();
     const generation = this.generation;
-    const scopes = [...SCOPES, CREATE_SCOPE].join(' ');
+    const scopes = [...SCOPES, CREATE_SCOPE, 'moderator:read:followers', 'channel:read:subscriptions'].join(' ');
     const pending = await post('/device', { client_id: client, scopes });
     if (generation !== this.generation) return;
     const url = new URL(pending.verification_uri);
@@ -229,10 +229,12 @@ class Twitch {
           const subscriptions = [
             ['channel.chat.message', { ...condition, user_id: user.user_id }],
             ['channel.channel_points_custom_reward_redemption.add', condition],
+            ['channel.follow', {...condition, moderator_user_id: user.user_id}, '2'],
+            ['channel.subscribe', condition],
           ];
-          const results = await Promise.allSettled(subscriptions.map(([type, condition]) =>
+          const results = await Promise.allSettled(subscriptions.map(([type, condition, version = '1']) =>
             this.authorized(HELIX + '/eventsub/subscriptions', {
-              method: 'POST', body: JSON.stringify({ type, version: '1', condition,
+              method: 'POST', body: JSON.stringify({ type, version, condition,
                 transport: { method: 'websocket', session_id: payload.session.id },
               }),
             }),
@@ -243,6 +245,7 @@ class Twitch {
           this.readyStatus = [
             chat.status === 'fulfilled' ? 'Chat ativo' : 'Chat indisponível: ' + chat.reason.message,
             rewards.status === 'fulfilled' ? 'Resgates ativos' : 'Resgates indisponíveis: ' + rewards.reason.message,
+            ...results.slice(2).map((result, index) => (index ? 'Inscrições' : 'Follows') + (result.status === 'fulfilled' ? ' ativos' : ' indisponíveis: reconecte e autorize a conta')),
           ].join(' · ');
           this.report(this.readyStatus);
           if (results.every((result) => result.status === 'rejected')) {
@@ -263,6 +266,8 @@ class Twitch {
           if (this.seen.has(metadata.message_id)) return;
           this.seen.add(metadata.message_id);
           if (this.seen.size > 2048) this.seen.delete(this.seen.values().next().value);
+          if (metadata.subscription_type === 'channel.follow') this.activity('follow', {...payload.event, id: metadata.message_id});
+          if (metadata.subscription_type === 'channel.subscribe') this.activity('subscription', {...payload.event, id: metadata.message_id});
           if (metadata.subscription_type === 'channel.chat.message') this.chat(payload.event);
           if (metadata.subscription_type === 'channel.channel_points_custom_reward_redemption.add') this.redemption(payload.event);
         }

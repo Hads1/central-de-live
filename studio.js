@@ -1,3 +1,7 @@
+const { PlatformActivity } = require('./platform-activity');
+const { KickEvents } = require('./kick-events');
+const { StarviosAccount } = require('./starvios-account');
+const templates = require('./message-templates');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -8,6 +12,7 @@ const { ViewerSecrets } = require('./viewer-secrets');
 const { AutomationStore } = require('./automation-store');
 const { StreamingAccount, providers } = require('./streaming-accounts');
 const { KickRewards } = require('./kick-rewards');
+const { ChatAutomation } = require('./chat-automation');
 
 const { FORMATS, mediaKind } = require('./alert-overlay');
 
@@ -34,7 +39,7 @@ function importKaiaPreferences(app, target) {
 }
 
 function installStudio({ win, directory, transcriptReady, startChats, emit, getChats, widgetServer,
-  saveStarvios, automationAudio, automationOutputs, getAlertOutput, setAlertOutput, refreshViewers = () => {}, smoke }) {
+  getStarviosChannel = () => '', saveStarvios, automationAudio, automationOutputs, controlSR, getAlertOutput, setAlertOutput, refreshViewers = () => {}, smoke }) {
   const config = path.join(directory, 'mini-alerts.json');
   let rules = {};
   try {
@@ -149,9 +154,9 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
     if (!test) {
       history.unshift({ ...data, media: undefined, mediaStatus });
       if (history.length > 50) history.pop();
-      emit('message', { platform, platformName: (platform === 'kick' ? 'Kick' : 'Twitch') + ' · Resgate',
+      if (templates.message(automation.state, 'redemption', {usuario: data.user, recompensa: data.title, pontos: data.cost, plataforma: platform})) emit('message', { platform, platformName: (platform === 'kick' ? 'Kick' : 'Twitch') + ' · Resgate',
         id: 'resgate:' + event.id, user: data.user, redemption: true,
-        text: `resgatou ${data.title} · ${data.cost} pontos` });
+        text: templates.message(automation.state, 'redemption', {usuario: data.user, recompensa: data.title, pontos: data.cost, plataforma: platform}) });
     }
     const linked = !test && !rule && platform === 'twitch' ? automation.state.commands.filter((command) =>
       command.enabled && command.automatically && command.reward === event.reward.id) : [];
@@ -165,7 +170,6 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
   let timerStart = Date.now();
   let checkingTimer = false;
   let emotesFor;
-  const lastRun = new Map();
   const twitch = new Twitch({
     store: twitchStore,
     update: (s) => {
@@ -201,16 +205,9 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
         emotes: emoteRanges(event.message.fragments), room: event.broadcaster_user_id });
       if (event.chatter_user_id === twitch.user?.user_id) return;
       timerMessages++;
-      const [trigger, ...args] = event.message.text.trim().split(/\s+/);
-      for (const command of automation.state.commands) {
-        if (command.type !== 'chat' || !command.enabled || !command.trigger.includes(trigger.toLowerCase())) continue;
-        const now = Date.now();
-        if (now - (lastRun.get(command.id) || 0) < 5000) continue;
-        lastRun.set(command.id, now);
-        void runCommand(command, { user: event.chatter_user_name, args: args.join(' ') }).catch(reportAutomation);
-      }
     },
     redemption: alert,
+    activity: (kind, event) => { void activity.receive({platform: 'twitch', kind, id: event.followed_at ? event.user_id + ':' + event.followed_at : event.id, channel: event.broadcaster_user_name || event.broadcaster_user_login, user: event.user_name || event.user_login}); },
   });
   const accounts = Object.fromEntries(Object.keys(providers).map((provider) => [provider, new StreamingAccount({
     provider,
@@ -226,13 +223,34 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
         startChats();
       }
     },
+    activity: (event) => { void activity.receive(event); },
     message: (data) => {
       if (transcriptReady()) emit('message', { ...data, platform: 'youtube' });
     },
   })]));
   const kickRewards = new KickRewards(accounts.kick, (event) => alert(event, false, 'kick'),
     (message) => notify('studio-kick-rewards', message));
+  const sendPlatform = (provider, text) => provider === 'twitch' ? twitch.send(text) : provider === 'starvios' ? starviosAccount.send(text) : providerAccount(provider).send(text);
+  const activity = new PlatformActivity({text: (id, values) => templates.message(automation.state, id, values), send: sendPlatform, report: reportAutomation});
+  const starviosAccount = new StarviosAccount({smoke, activity: event => activity.receive(event), report: reportAutomation, channel: getStarviosChannel, connected: saveStarvios,
+    save: enabled => automation.save({...automation.state, starviosActivityEnabled: enabled})});
+  const kickEvents = new KickEvents({account: accounts.kick, activity: event => activity.receive(event), report: reportAutomation});
+  widgetServer.kickEvents = (req, res) => kickEvents.handle(req, res);
   let kickAccount = '';
+  const chatAutomation = new ChatAutomation({
+    templateMessage: (id, values) => templates.message(automation.state, id, values),
+    store: automation,
+    send: sendPlatform,
+    control: (action, args) => controlSR(action, args),
+    isOwner: (message) => message.platform === 'twitch'
+      ? Boolean(twitch.user && message.login === twitch.user.login)
+      : message.platform === 'kick' ? Boolean(accounts.kick.account && (message.login || message.user)?.toLowerCase() === accounts.kick.account.name.toLowerCase())
+      : message.platform === 'starvios' ? Boolean(starviosAccount.account && (message.login || message.user)?.toLowerCase() === starviosAccount.account.name.toLowerCase())
+      : Boolean(message.platform === 'youtube' && accounts.youtube.account && message.userId === accounts.youtube.account.id),
+    report: (message) => notify('studio-chat-automation', message),
+  });
+  const chatTimer = setInterval(() => { if (!smoke) void chatAutomation.tick(); }, 1000);
+  win.once('closed', () => clearInterval(chatTimer));
   function owner(provider) {
     return provider === 'kick' ? accounts.kick.account?.id : twitch.user?.user_id;
   }
@@ -332,6 +350,26 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
   const scheduler = setInterval(tickTimer, 15000);
   win.once('closed', () => clearInterval(scheduler));
   const actions = {
+    activityState: () => ({starvios: starviosAccount.snapshot(), kick: accounts.kick.account ? kickEvents.status : 'Conecte a conta Kick', kickReceiver: new URL('/integrations/kick/events', widgetServer.url).href,
+      twitch: twitch.snapshot().status, youtube: accounts.youtube.snapshot().status}),
+    connectStarviosActivity: () => starviosAccount.open(true),
+    disconnectStarviosActivity: () => starviosAccount.disconnect(),
+    subscribeKickActivity: () => kickEvents.subscribe(),
+    messageTemplates: () => templates.snapshot(automation.state),
+    saveMessageTemplates: ({ rows }) => { automation.save({...automation.state, messageTemplates: templates.validate(rows)}); return templates.snapshot(automation.state); },
+    chatAutomationState: () => chatAutomation.snapshot(),
+    saveMessageTimer: (value) => chatAutomation.saveTimer(value),
+    removeMessageTimer: ({ id }) => chatAutomation.removeTimer(id),
+    testMessageTimer: async ({ id }) => {
+      const timer = chatAutomation.snapshot().timers.find((item) => item.id === id);
+      if (!timer) throw Error('Temporizador não encontrado.');
+      await chatAutomation.dispatch(timer);
+    },
+    saveCommandMember: (value) => chatAutomation.saveMember(value),
+    saveChatResponse: (value) => chatAutomation.saveResponse(value),
+    removeChatResponse: ({ id }) => chatAutomation.removeResponse(id),
+    saveSkipVoting: (value) => chatAutomation.saveVoting(value),
+    savePromoteCommand: (value) => chatAutomation.savePromoteCommand(value),
     state: () => ({ twitch: twitchState(twitch.snapshot()), history, alertOutput: getAlertOutput(), overlayUrl, obsAudioUrl,
       platforms: Object.fromEntries(Object.entries(accounts).map(([key, account]) => [key, account.snapshot()])) }),
     configureTwitch: ({ client }) => {
@@ -375,10 +413,10 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
     },
     send: async ({ message, targets }) => {
       const selected = Array.isArray(targets) ? [...new Set(targets)] : [];
-      if (!selected.length || selected.some((name) => !['twitch', 'kick', 'youtube'].includes(name))) throw Error('Selecione os destinos da mensagem.');
+      if (!selected.length || selected.some((name) => !['twitch', 'kick', 'youtube', 'starvios'].includes(name))) throw Error('Selecione os destinos da mensagem.');
       return Promise.all(selected.map(async (provider) => {
         try {
-          await (provider === 'twitch' ? twitch.send(message) : providerAccount(provider).send(message));
+          await sendPlatform(provider, message);
           return { provider, sent: true };
         } catch (error) {
           return { provider, sent: false, message: error.message };
@@ -505,8 +543,7 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
       return runCommand(command, { title: command?.name, user: twitch.user?.login || 'Operador',
         args: String(args || '').slice(0, 500) });
     },
-    createCommand: ({ name, trigger, text }) => automation.addChat(
-      String(name || '').trim().slice(0, 80), String(trigger || '').trim().toLowerCase(), String(text || '').trim()),
+    createCommand: (value) => chatAutomation.saveResponse(value),
   };
 
   ipcMain.handle('studio', (event, action, args) => {
@@ -516,6 +553,19 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
   });
 
   return {
+    templateMessage: (id, values) => templates.message(automation.state, id, values),
+    announceSong: async (item, targets) => {
+      const message = templates.message(automation.state, 'sr', {usuario: item.user || 'Operador', musica: item.titulo || 'Sem título'});
+      if (!message) return;
+      const selected = (targets || []).filter((provider) => provider === 'twitch'
+        ? Boolean(twitch.user) : provider === 'starvios' ? Boolean(starviosAccount.account) : Boolean(accounts[provider]?.account));
+      if (!selected.length) return;
+      const results = await actions.send({ message, targets: selected });
+      const failures = results.filter((result) => !result.sent);
+      if (failures.length) throw Error(failures.map((result) => result.provider + ': ' + result.message).join(' | '));
+    },
+    receiveMessage: (message) => { void chatAutomation.receive(message); },
+    resetSkipVotes: () => chatAutomation.resetVotes(),
     twitch,
     kickChannel: () => accounts.kick.account?.name || '',
     viewerSession(provider) {
@@ -547,11 +597,13 @@ function installStudio({ win, directory, transcriptReady, startChats, emit, getC
       } };
     },
     resume: () => {
-      if (!smoke) return Promise.allSettled([twitch.resume(), ...Object.values(accounts).map((account) => account.resume())]);
+      if (!smoke) return Promise.allSettled([...(automation.state.starviosActivityEnabled ? [starviosAccount.open(false)] : []), twitch.resume(), ...Object.values(accounts).map((account) => account.resume())]);
     },
     stop: () => {
+      clearInterval(chatTimer);
       twitch.stop();
       kickRewards.stop();
+      starviosAccount.stop();
       for (const hotkey of shortcuts.keys()) globalShortcut.unregister(hotkey);
       for (const account of Object.values(accounts)) account.stop();
     },

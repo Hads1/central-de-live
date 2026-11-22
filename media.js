@@ -27,6 +27,8 @@ function installMedia({
   emit,
   widgetServer,
   smoke,
+  announceChat = async () => {},
+  templateMessage = (id, values) => `${values.usuario} pediu ${values.musica}.`,
 }) {
   const settings = getSettings();
   const t = (text) => locale.translate(text, getSettings().language);
@@ -40,6 +42,8 @@ function installMedia({
     requestLimit: 80,
     playlistLimit: 0,
     announceRequests: true,
+    announceChat: true,
+    announceChatTargets: ['twitch', 'kick'],
     ...settings.sr,
   };
   if (!settings.sr.playlistSizingV2 && settings.sr.playlistLimit === 60)
@@ -94,6 +98,7 @@ function installMedia({
   reader.configure(settings.reader);
   let lastAlert = null;
   function announce(text, user = 'Kaia') {
+    if (!text) return true;
     text = t(text);
     if (smoke) return;
     if (!settings.reader.output) {
@@ -123,7 +128,7 @@ function installMedia({
   ipcMain.handle('repeat-request', () => {
     if (!lastRequest) return 'Nenhum pedido novo recebido nesta sessão.';
     announce(
-      `${lastRequest.user} pediu ${lastRequest.titulo}.`,
+      templateMessage('srVoice', {usuario: lastRequest.user, musica: lastRequest.titulo}),
       lastRequest.user,
     );
     return true;
@@ -294,7 +299,11 @@ function installMedia({
           announced.add(item.key);
           if (item.at >= startedAt) lastRequest = item;
           if (settings.sr.announceRequests && item.at >= startedAt)
-            announce(`${item.user} pediu ${item.titulo}.`, item.user);
+            announce(templateMessage('srVoice', {usuario: item.user, musica: item.titulo}), item.user);
+          if (settings.sr.announceChat && item.at >= startedAt) {
+            void announceChat(item, settings.sr.announceChatTargets)
+              .catch((error) => notify('sr', 'Anúncio no chat falhou: ' + error.message));
+          }
         }
       if (announced.size > 2000)
         announced.delete(announced.values().next().value);
@@ -373,6 +382,10 @@ function installMedia({
         ),
       ),
       announceRequests: value.announceRequests ?? settings.sr.announceRequests,
+      announceChat: value.announceChat ?? settings.sr.announceChat,
+      announceChatTargets: Array.isArray(value.announceChatTargets)
+        ? [...new Set(value.announceChatTargets)].filter((target) => ['twitch', 'kick', 'youtube', 'starvios'].includes(target))
+        : settings.sr.announceChatTargets,
     };
     saveSettings();
     if (!smoke) {
@@ -388,6 +401,7 @@ function installMedia({
   const actions = new Set([
     'save_playlist',
     'restore_playlist',
+    'select_playlist',
     'pedir',
     'adicionar_playlist',
     'play_pause',
@@ -412,6 +426,7 @@ function installMedia({
     'play',
     'pause',
     'edit_queue',
+    'promote',
   ]);
   async function runSR(action, args = [], queued = false) {
     if (
@@ -455,6 +470,17 @@ function installMedia({
       );
       return 'Log do SR exportado.';
     }
+    let playlistSource;
+    if (action === 'select_playlist') {
+      const picked = await dialog.showOpenDialog(win, {
+        title: 'Selecionar playlist salva',
+        defaultPath: path.join(directory, 'saved-playlist.json'),
+        properties: ['openFile'],
+        filters: [{ name: 'Playlist da Central de Live', extensions: ['json'] }],
+      });
+      if (picked.canceled || !picked.filePaths[0]) return 'Seleção cancelada.';
+      playlistSource = picked.filePaths[0];
+    }
     await backend.start();
     if (configuredProcess !== backend.process) await configureSR();
     if (action === 'adicionar_playlist' && args.length >= 3) {
@@ -472,9 +498,11 @@ function installMedia({
         volume: settings.sr.volume,
       });
     if (action === 'retry') await syncCookies();
-    const result = await backend.call(action, args);
+    const result = await backend.call(action === 'select_playlist' ? 'select_playlist' : action,
+      action === 'select_playlist' ? { path: playlistSource } : args);
     if (
       action === 'restore_playlist' ||
+      action === 'select_playlist' ||
       (action === 'edit_queue' && args[1] === 'move')
     ) {
       settings.sr.shuffle = false;
@@ -585,6 +613,10 @@ function installMedia({
       .then(() => syncCookies())
       .catch((error) => notify('sr', error.message));
   return {
+    controlSR: (action, args) => {
+      if (!settings.sr.enabled) throw Error('Ative o SR antes de usar os comandos de chat.');
+      return runSR(action, args);
+    },
     automationAudio: (action, data) => backend.call(action, data, 136000),
     automationOutputs: async () => (await backend.call('diagnose')).outputs,
     info: () => ({

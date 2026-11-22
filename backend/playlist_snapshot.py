@@ -12,20 +12,27 @@ def save_playlist(player, destination):
         items = ([player.atual] if player.atual and player._fonte_de(player.atual) == 'playlist' else []) + [x for x in player.fila if player._fonte_de(x) == 'playlist']
         rows = [{k: x.get(k) for k in ('q', 'id', 'titulo', 'dur', 'user')} for x in items]
     if not rows:
-        raise ValueError('A playlist está vazia. A última playlist salva foi preservada.')
+        raise ValueError('A playlist de fundo está vazia. Adicione uma playlist do YouTube ou use Adicionar faixa à playlist de fundo antes de salvar.')
     target = Path(destination)
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_name(target.name + '.' + uuid.uuid4().hex + '.tmp')
     temporary.write_text(json.dumps({'version': 1, 'tracks': rows}, ensure_ascii=False), encoding='utf-8')
     os.replace(temporary, target)
-    return 'Playlist salva.'
+    return f'Playlist salva: {len(rows)} músicas. Arquivo: {target}'
 
 
 def restore_playlist(player, destination):
     target = Path(destination)
     if not target.exists():
         raise ValueError('Nenhuma playlist salva neste computador.')
-    data = json.loads(target.read_text(encoding='utf-8'))
+    if target.stat().st_size > 20_000_000:
+        raise ValueError('Arquivo de playlist muito grande.')
+    try:
+        data = json.loads(target.read_text(encoding='utf-8-sig'))
+    except (ValueError,UnicodeError):
+        raise ValueError('Escolha um arquivo JSON de playlist salvo pela Central de Live.')
+    if not isinstance(data,dict):
+        raise ValueError('Playlist salva inválida.')
     rows = data.get('tracks')
     if data.get('version') != 1 or not isinstance(rows, list) or not rows:
         raise ValueError('Playlist salva inválida.')
@@ -50,4 +57,4 @@ def restore_playlist(player, destination):
     else:
         for item in items:
             threading.Thread(target=player._resolver, args=(item,), daemon=True).start()
-    return 'Playlist recuperada.'
+    return f'Playlist recuperada: {len(items)} músicas aguardando.'

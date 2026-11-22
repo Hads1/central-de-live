@@ -109,6 +109,7 @@
       'requestLimit',
       'playlistLimit',
       'announceRequests',
+      'announceChat',
     ]) {
       const input = el('sr-' + key);
       if (input.type === 'checkbox') input.checked = !!s.sr[key];
@@ -117,6 +118,9 @@
           input.add(new Option(s.sr.output, s.sr.output));
         input.value = s.sr[key];
       }
+    }
+    for (const input of document.querySelectorAll('#sr-announce-chat-targets input')) {
+      input.checked = (s.sr.announceChatTargets || ['twitch', 'kick']).includes(input.value);
     }
     syncMusicVolume(s.sr.volume);
     el('spotify-client-id').value = s.spotify.clientId;
@@ -214,6 +218,8 @@
         requestLimit: el('sr-requestLimit').value,
         playlistLimit: el('sr-playlistLimit').value,
         announceRequests: el('sr-announceRequests').checked,
+        announceChat: el('sr-announceChat').checked,
+        announceChatTargets: [...document.querySelectorAll('#sr-announce-chat-targets input:checked')].map((input) => input.value),
       });
       return (
         'SR salvo. ' +
@@ -225,6 +231,21 @@
   for (const button of document.querySelectorAll('[data-sr]'))
     button.onclick = () =>
       task('sr', () => window.kaia.srAction(button.dataset.sr, []));
+  for (const button of document.querySelectorAll('[data-sr="save_playlist"], [data-sr="restore_playlist"], [data-sr="select_playlist"]')) {
+    button.onclick = async () => {
+      const buttons = [...document.querySelectorAll('[data-sr="save_playlist"], [data-sr="restore_playlist"], [data-sr="select_playlist"]')];
+      for (const control of buttons) control.disabled = true;
+      el('sr-playlist-status').textContent = 'Aguarde…';
+      try {
+        const result = await window.kaia.srAction(button.dataset.sr, []);
+        el('sr-playlist-status').textContent = String(result || 'Concluído.');
+      } catch (error) {
+        el('sr-playlist-status').textContent = error.message.replace(/^Error invoking remote method 'sr-action': (?:Error: )?/, '');
+      } finally {
+        for (const control of buttons) control.disabled = false;
+      }
+    };
+  }
   el('sr-export-log').onclick = () =>
     task('sr', () => window.kaia.srAction('export-log', []));
   el('sr-test-audio').onclick = () =>

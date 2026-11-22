@@ -5,6 +5,77 @@
   --background: 0.8;
   --font: 18px;
 }
+/* Configuration pages are styled independently of the Chat surface. */
+body.feature-tab #tabs, body.widget-tab #tabs {
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 18px;
+  max-height: 128px;
+  overflow-y: auto;
+  border-bottom: 1px solid #293044;
+  background: #101420;
+}
+body.feature-tab #tabs button, body.widget-tab #tabs button {
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+.feature-panel > h1, #widget-panel > h1, .settings-heading h1 {
+  font-size: 25px;
+  letter-spacing: -0.5px;
+  margin: 4px 0 10px;
+}
+.settings-heading {
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  border: 1px solid #454061;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #24213b, #141a28);
+}
+.settings-eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  color: #b9a5ed;
+}
+.settings-heading p { margin-bottom: 0; }
+.feature-panel > .studio-card, #widget-panel > .studio-card {
+  padding: 18px;
+  border-radius: 12px;
+}
+.feature-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 76px;
+  resize: vertical;
+  padding: 10px;
+  color: #eef0ff;
+  background: #111520;
+  border: 1px solid #ffffff30;
+  border-radius: 8px;
+}
+.feature-panel fieldset {
+  margin: 14px 0;
+  padding: 14px;
+  min-width: 0;
+  border: 1px solid #30394e;
+  border-radius: 10px;
+}
+.settings-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.connection-details { margin-top: 16px; }
+.connection-details summary { cursor: pointer; color: #c6b8ee; }
+[data-studio-feedback], [data-automation-status] {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  body.feature-tab #tabs, body.widget-tab #tabs { padding: 8px; max-height: 112px; }
+  .feature-panel > .studio-card { padding: 12px; }
+  .settings-heading { padding: 12px; }
+}
 .studio-card {
   background: #151925;
   border: 1px solid #2c3449;
@@ -14,6 +85,16 @@
 }
 .studio-card h2 {
   margin: 2px 0 8px;
+}
+#automation-timer-message, #automation-response-text {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  background: #111520;
+  color: #eef0ff;
+  border: 1px solid #ffffff30;
+  border-radius: 7px;
+  padding: 8px;
 }
 .studio-inline {
   display: flex;
@@ -223,8 +304,11 @@ body.overlay #chat-player {
   border: 1px solid #ffffff30;
 }
 #tabs {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex-shrink: 0;
 }
+#tabs button { flex-shrink: 0; white-space: nowrap; }
 body.feature-tab #setup,
 body.feature-tab #feed {
   display: none;

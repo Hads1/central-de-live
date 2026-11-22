@@ -1,23 +1,28 @@
 window.selectKaiaTab = (name) => {
+  const buttons = [...document.querySelectorAll('#tabs button[id^="tab-"]')];
+  if (!buttons.some(button => button.id === 'tab-' + name)) return;
   document.body.classList.toggle('widget-tab', name === 'widget');
-  document.body.classList.toggle(
-    'feature-tab',
-    ['reader', 'sr', 'alerts', 'studio', 'guide'].includes(name),
-  );
-  for (const tab of ['chat', 'widget', 'reader', 'sr', 'alerts', 'studio', 'guide']) {
-    document
-      .getElementById('tab-' + tab)
-      ?.setAttribute('aria-pressed', String(tab === name));
-    if (tab !== 'chat') {
-      const panel = document.getElementById(tab + '-panel');
-      if (panel) panel.hidden = tab !== name;
-    }
+  document.body.classList.toggle('feature-tab', name !== 'chat' && name !== 'widget');
+  for (const button of buttons) {
+    const tab = button.id.slice(4);
+    button.setAttribute('aria-pressed', String(tab === name));
+    const panel = document.getElementById(tab + '-panel');
+    if (panel) panel.hidden = tab !== name;
   }
+  document.dispatchEvent(new CustomEvent('central-page-change', {detail: name}));
 };
 (() => {
   const el = (id) => document.getElementById(id);
   function tab(widget) {
     window.selectKaiaTab(widget ? 'widget' : 'chat');
+  }
+  for (const button of document.querySelectorAll('#tabs button[id^="tab-"]')) {
+    button.onclick = () => window.selectKaiaTab(button.id.slice(4));
+  }
+  for (const [sourceId, selector] of [['studio-feedback', '[data-studio-feedback]'], ['automation-status', '[data-automation-status]']]) {
+    const source = el(sourceId);
+    const mirror = () => document.querySelectorAll(selector).forEach(target => target.textContent = source.textContent);
+    new MutationObserver(mirror).observe(source, {childList: true, characterData: true, subtree: true});
   }
   el('tab-chat').onclick = () => tab(false);
   el('tab-widget').onclick = () => tab(true);

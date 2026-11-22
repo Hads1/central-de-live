@@ -43,101 +43,465 @@
     </div>
     <main>
       <nav id="tabs" aria-label="Configurações">
-        <button id="tab-chat" aria-pressed="true">Chat</button
-        ><button id="tab-widget" aria-pressed="false">Widget</button>
+        <button id="tab-chat" aria-pressed="true">Chat</button>
+        <button id="tab-studio" aria-pressed="false" data-i18n-ignore>
+          Contas e conexões
+        </button>
+        <button id="tab-rewards" aria-pressed="false" data-i18n-ignore>
+          Resgates
+        </button>
+        <button id="tab-alerts" aria-pressed="false" data-i18n-ignore>
+          Alertas
+        </button>
+        <button id="tab-automation" aria-pressed="false" data-i18n-ignore>
+          Mensagens
+        </button>
+        <button id="tab-permissions" aria-pressed="false" data-i18n-ignore>
+          Permissões
+        </button>
+        <button id="tab-sr" aria-pressed="false" data-i18n-ignore>
+          SR / Spotify
+        </button>
         <button id="tab-reader" aria-pressed="false">Leitor</button>
-        <button id="tab-sr" aria-pressed="false">SR / Spotify</button>
-        <button id="tab-alerts" aria-pressed="false">Alertas</button>
-        <button id="tab-studio" aria-pressed="false">Conexões e resgates</button>
-        <button id="tab-guide" aria-pressed="false" data-i18n-ignore>Tutorial</button>
+        <button id="tab-widget" aria-pressed="false" data-i18n-ignore>
+          Widgets / OBS
+        </button>
+        <button id="tab-counters" aria-pressed="false" data-i18n-ignore>
+          Contadores
+        </button>
+        <button id="tab-guide" aria-pressed="false" data-i18n-ignore>
+          Tutorial
+        </button>
       </nav>
+      <section
+        id="automation-panel"
+        class="feature-panel"
+        hidden
+        data-i18n-ignore
+      >
+        <h1>Mensagens e comandos</h1>
+        <p id="automation-status" role="status"></p>
+        <section class="studio-card">
+          <h2>Comandos de resposta</h2>
+          <input id="automation-response-id" type="hidden" />
+          <label
+            >Comando
+            <input
+              id="automation-response-trigger"
+              placeholder="!discord"
+              maxlength="41"
+          /></label>
+          <label
+            >Resposta
+            <textarea
+              id="automation-response-text"
+              rows="3"
+              maxlength="500"
+            ></textarea>
+          </label>
+          <label
+            ><input id="automation-response-enabled" type="checkbox" checked />
+            Ativar comando</label
+          >
+          <div class="feature-actions">
+            <button id="automation-response-save">Salvar comando</button>
+            <button id="automation-response-new">Novo comando</button>
+          </div>
+          <p>
+            A resposta é enviada no canal em que o comando foi usado. Use
+            $username para o nome da pessoa e $args para o texto após o comando.
+            Há um intervalo de 5 segundos por comando e plataforma.
+          </p>
+          <ul id="automation-responses"></ul>
+        </section>
+        <section class="studio-card">
+          <h2>Mensagens automáticas</h2>
+          <input id="automation-timer-id" type="hidden" />
+          <label
+            >Nome <input id="automation-timer-name" maxlength="80"
+          /></label>
+          <label
+            >Mensagem
+            <textarea
+              id="automation-timer-message"
+              maxlength="500"
+              rows="3"
+            ></textarea>
+          </label>
+          <label
+            >Intervalo em minutos
+            <input
+              id="automation-timer-minutes"
+              type="number"
+              min="1"
+              max="1440"
+              value="10"
+          /></label>
+          <div id="automation-timer-targets">
+            <label><input type="checkbox" value="twitch" /> Twitch</label>
+            <label><input type="checkbox" value="kick" /> Kick</label>
+            <label><input type="checkbox" value="youtube" /> YouTube</label>
+            <label><input type="checkbox" value="starvios" /> Starvios</label>
+          </div>
+          <label
+            ><input id="automation-timer-enabled" type="checkbox" checked />
+            Ativar temporizador</label
+          >
+          <div class="feature-actions">
+            <button id="automation-timer-save">Salvar temporizador</button>
+            <button id="automation-timer-new">Novo</button>
+          </div>
+          <p>
+            Com a Central aberta, a primeira mensagem será enviada após o
+            intervalo. Ao reabrir, a contagem recomeça. Cada destino precisa
+            estar conectado.
+          </p>
+          <ul id="automation-timers"></ul>
+        </section>
+
+        <section class="studio-card">
+          <h2>Biblioteca de automações</h2>
+          <p>
+            Crie as respostas na seção Comandos de resposta. A biblioteca reúne
+            automações e dados já cadastrados.
+          </p>
+          <div class="studio-inline">
+            <select id="studio-collection" aria-label="Dados das automações">
+              <option value="commands">Comandos</option>
+              <option value="currency">Moedas</option>
+              <option value="inventory">Inventários</option>
+              <option value="counters">Contadores</option>
+              <option value="users">Usuários</option>
+              <option value="quotes">Citações</option>
+            </select>
+            <button id="studio-sync">Atualizar</button>
+          </div>
+          <label
+            >Buscar <input id="studio-search" type="search" maxlength="80"
+          /></label>
+          <p id="studio-automation-count"></p>
+          <label
+            >Argumentos do comando <input id="studio-args" maxlength="1000"
+          /></label>
+          <ul id="studio-automation-list"></ul>
+        </section>
+      </section>
       <section id="guide-panel" class="feature-panel" hidden data-i18n-ignore>
         <h1>Tutorial da Central de Live</h1>
+<p>Cada função tem sua própria página. Use Contas e conexões para logins, Resgates para pontos, Alertas para textos dos eventos, Mensagens para comandos e timers, Permissões para cargos, SR para músicas, Leitor para voz, Widgets / OBS para fontes e Contadores para espectadores.</p>
         <p>Criado por <strong>Hads</strong>.</p>
         <div class="feature-actions">
-          <button data-guide-tab="studio">Abrir Conexões e resgates</button>
+          <button data-guide-tab="studio">Abrir Contas e conexões</button>
           <button data-guide-tab="widget">Abrir Widget</button>
         </div>
 
         <details class="studio-card" open>
           <summary>Primeira abertura e chat</summary>
           <ol>
-            <li>Extraia todo o ZIP portátil e abra <strong>Central de Live.exe</strong>.</li>
-            <li>Na aba <strong>Chat</strong>, informe nome ou URL dos canais que quer acompanhar, marque <strong>Ativar</strong> em cada um e clique em <strong>Salvar e conectar</strong>.</li>
-            <li>Para responder pelo chat, vincule suas contas em <strong>Conexões e resgates</strong>. Na caixa de mensagem, abra o seletor de destinos e marque Twitch, Kick, YouTube ou uma combinação deles.</li>
-            <li>O resultado do envio aparece por destino. Se apenas uma plataforma falhar, a Central deixa esse destino marcado para tentar novamente.</li>
+            <li>
+              Extraia todo o ZIP portátil e abra
+              <strong>Central de Live.exe</strong>.
+            </li>
+            <li>
+              Na aba <strong>Chat</strong>, informe nome ou URL dos canais que
+              quer acompanhar, marque <strong>Ativar</strong> em cada um e
+              clique em <strong>Salvar e conectar</strong>.
+            </li>
+            <li>
+              Para responder pelo chat, vincule suas contas em
+              <strong>Contas e conexões</strong>. Na caixa de mensagem, abra o
+              seletor de destinos e marque Twitch, Kick, YouTube ou uma
+              combinação deles.
+            </li>
+            <li>
+              O resultado do envio aparece por destino. Se apenas uma plataforma
+              falhar, a Central deixa esse destino marcado para tentar
+              novamente.
+            </li>
           </ol>
-          <p>O botão de modo jogo deixa o chat transparente e permite clicar no jogo através da janela. Pressione <kbd>Ctrl+Shift+F9</kbd> para recuperar os controles e <kbd>Ctrl+Shift+F10</kbd> para alternar a passagem de cliques.</p>
+          <p>
+            O botão de modo jogo deixa o chat transparente e permite clicar no
+            jogo através da janela. Pressione <kbd>Ctrl+Shift+F9</kbd> para
+            recuperar os controles e <kbd>Ctrl+Shift+F10</kbd> para alternar a
+            passagem de cliques.
+          </p>
         </details>
 
         <details class="studio-card">
           <summary>Conectar a Twitch</summary>
           <ol>
-            <li>Em <strong>Conexões e resgates → Twitch → Configuração do aplicativo</strong>, clique em <strong>Abrir console da Twitch</strong>.</li>
-            <li>Registre um aplicativo com nome único. Adicione <code>http://localhost:3000</code> como URL de redirecionamento OAuth, escolha a categoria <strong>Chat Bot</strong> e o tipo de cliente <strong>Público</strong>. Conclua a validação e crie o aplicativo.</li>
-            <li>Abra <strong>Gerenciar</strong>, copie o <strong>Client ID</strong> e cole na Central. O login neste aplicativo usa código de dispositivo e funciona com o Client ID.</li>
-            <li>Clique em <strong>Conectar Twitch</strong> e autorize pelo navegador com a conta dona do canal. Aguarde o status <strong>Chat ativo · Resgates ativos</strong>.</li>
-            <li>Para conferir, selecione <strong>Twitch</strong> em <strong>Plataforma da recompensa</strong> e clique em <strong>Carregar recompensas</strong>. Use <strong>Desconectar</strong> e autorize novamente se precisar atualizar as permissões.</li>
+            <li>
+              Em
+              <strong
+                >Contas e conexões → Twitch → Configuração do aplicativo</strong
+              >, clique em <strong>Abrir console da Twitch</strong>.
+            </li>
+            <li>
+              Registre um aplicativo com nome único. Adicione
+              <code>http://localhost:3000</code> como URL de redirecionamento
+              OAuth, escolha a categoria <strong>Chat Bot</strong> e o tipo de
+              cliente <strong>Público</strong>. Conclua a validação e crie o
+              aplicativo.
+            </li>
+            <li>
+              Abra <strong>Gerenciar</strong>, copie o
+              <strong>Client ID</strong> e cole na Central. O login neste
+              aplicativo usa código de dispositivo e funciona com o Client ID.
+            </li>
+            <li>
+              Clique em <strong>Conectar Twitch</strong> e autorize pelo
+              navegador com a conta dona do canal. Aguarde o status
+              <strong>Chat ativo · Resgates ativos</strong>.
+            </li>
+            <li>
+              Para conferir, abra Resgates e selecione
+              <strong>Twitch</strong> em
+              <strong>Plataforma da recompensa</strong> e clique em
+              <strong>Carregar recompensas</strong>. Use
+              <strong>Desconectar</strong> e autorize novamente se precisar
+              atualizar as permissões.
+            </li>
           </ol>
         </details>
 
         <details class="studio-card">
           <summary>Conectar a Kick</summary>
           <ol>
-            <li>Em <strong>Conexões e resgates → Kick → Configuração do aplicativo</strong>, abra as configurações de desenvolvedor da Kick e crie um aplicativo.</li>
-            <li>Cadastre exatamente <code>http://localhost:19350/central/kick</code> como URL de retorno. Copie o <strong>Client ID</strong> e o <strong>Client Secret</strong> para os campos correspondentes na Central. Clique em <strong>Salvar aplicativo Kick</strong>.</li>
-            <li>Clique em <strong>Conectar Kick</strong> e autorize com a conta dona do canal. Confira se a Central mostra <strong>Conta vinculada</strong> e o nome do canal.</li>
-            <li>Selecione <strong>Kick</strong> em <strong>Plataforma da recompensa</strong> e carregue a lista. Se houver um erro de autorização, desconecte, conecte novamente e confira a mensagem ao lado do botão.</li>
-            <li>Faça um novo resgate depois de salvar a regra. A Central consulta a fila da Kick periodicamente, então o aviso pode levar alguns segundos.</li>
+            <li>
+              Em
+              <strong
+                >Contas e conexões → Kick → Configuração do aplicativo</strong
+              >, abra as configurações de desenvolvedor da Kick e crie um
+              aplicativo.
+            </li>
+            <li>
+              Cadastre exatamente
+              <code>http://localhost:19350/central/kick</code> como URL de
+              retorno. Copie o <strong>Client ID</strong> e o
+              <strong>Client Secret</strong> para os campos correspondentes na
+              Central. Clique em <strong>Salvar aplicativo Kick</strong>.
+            </li>
+            <li>
+              Clique em <strong>Conectar Kick</strong> e autorize com a conta
+              dona do canal. Confira se a Central mostra
+              <strong>Conta vinculada</strong> e o nome do canal.
+            </li>
+            <li>
+              Na aba Resgates, selecione <strong>Kick</strong> em
+              <strong>Plataforma da recompensa</strong> e carregue a lista. Se
+              houver um erro de autorização, desconecte, conecte novamente e
+              confira a mensagem ao lado do botão.
+            </li>
+            <li>
+              Faça um novo resgate depois de salvar a regra. A Central consulta
+              a fila da Kick periodicamente, então o aviso pode levar alguns
+              segundos.
+            </li>
           </ol>
-          <p><strong>Lendo o canal</strong> na barra inferior indica que o chat público está conectado. A autorização da conta libera o envio de mensagens e o acesso aos pontos.</p>
+          <p>
+            <strong>Lendo o canal</strong> na barra inferior indica que o chat
+            público está conectado. A autorização da conta libera o envio de
+            mensagens e o acesso aos pontos.
+          </p>
         </details>
 
         <details class="studio-card">
           <summary>YouTube Live, Starvios e Spotify</summary>
           <ul>
-            <li><strong>YouTube Live</strong> — habilite a YouTube Data API v3 no Google Cloud e crie um cliente OAuth de aplicativo para computador. Importe o JSON pela Central e clique em <strong>Conectar YouTube</strong>. Se o projeto estiver em modo de teste, adicione sua conta à lista de usuários de teste. O chat fica disponível durante uma live ativa com chat habilitado.</li>
-            <li><strong>Starvios</strong> — adicione o nome ou URL do canal público. Para entrar na conta e escrever, use <strong>Abrir Starvios</strong>.</li>
-            <li><strong>Spotify e sessão do YouTube para músicas</strong> — use os controles da aba <strong>SR / Spotify</strong>. Essa sessão do YouTube é destinada à reprodução de pedidos.</li>
+            <li>
+              <strong>YouTube Live</strong> — habilite a YouTube Data API v3 no
+              Google Cloud e crie um cliente OAuth de aplicativo para
+              computador. Importe o JSON pela Central e clique em
+              <strong>Conectar YouTube</strong>. Se o projeto estiver em modo de
+              teste, adicione sua conta à lista de usuários de teste. O chat
+              fica disponível durante uma live ativa com chat habilitado.
+            </li>
+            <li>
+              <strong>Starvios</strong> — adicione o nome ou URL do canal
+              público. Para entrar e escrever, use
+              <strong>Conectar conta Starvios</strong> em Contas e conexões.
+            </li>
+            <li>
+              <strong>Spotify e sessão do YouTube para músicas</strong> — use as
+              conexões da aba <strong>Contas e conexões</strong>. Essa sessão do
+              YouTube é destinada à reprodução de pedidos.
+            </li>
           </ul>
         </details>
 
         <details class="studio-card">
           <summary>Pontos do canal, GIFs, vídeos e Stream Deck</summary>
           <ol>
-            <li>Em <strong>Mini alertas de pontos do canal</strong>, escolha a plataforma, carregue as recompensas e selecione uma delas.</li>
-            <li>Escolha um vídeo, GIF ou imagem e, se quiser, um áudio separado. Quando o áudio separado estiver preenchido, ele toca junto com o visual e substitui o som embutido do vídeo.</li>
-            <li>Para usar a mesma mídia em outra plataforma, selecione a segunda recompensa em <strong>Vincular a uma recompensa da outra plataforma</strong>. Salve a regra e clique em <strong>Testar regra salva</strong>.</li>
-            <li>Para cadastrar uma recompensa nova, abra <strong>Criar recompensa nos canais</strong>, preencha nome, custo e descrição e marque Twitch, Kick ou as duas. Salve a mídia localmente na Central. No chat, um novo resgate aparece com o nome de quem usou os pontos.</li>
-            <li>Para disparar manualmente pelo Stream Deck, salve um atalho global na regra, por exemplo <kbd>Ctrl+Alt+F8</kbd>, e use a mesma combinação em uma ação <strong>Tecla de atalho</strong> no Stream Deck. Mantenha a Central aberta.</li>
+            <li>
+              Em <strong>Resgates → Mini alertas de pontos do canal</strong>,
+              escolha a plataforma, carregue as recompensas e selecione uma
+              delas.
+            </li>
+            <li>
+              Escolha um vídeo, GIF ou imagem e, se quiser, um áudio separado.
+              Quando o áudio separado estiver preenchido, ele toca junto com o
+              visual e substitui o som embutido do vídeo.
+            </li>
+            <li>
+              Para usar a mesma mídia em outra plataforma, selecione a segunda
+              recompensa em
+              <strong>Vincular a uma recompensa da outra plataforma</strong>.
+              Salve a regra e clique em <strong>Testar regra salva</strong>.
+            </li>
+            <li>
+              Para cadastrar uma recompensa nova, abra
+              <strong>Criar recompensa nos canais</strong>, preencha nome, custo
+              e descrição e marque Twitch, Kick ou as duas. Salve a mídia
+              localmente na Central. No chat, um novo resgate aparece com o nome
+              de quem usou os pontos.
+            </li>
+            <li>
+              Para disparar manualmente pelo Stream Deck, salve um atalho global
+              na regra, por exemplo <kbd>Ctrl+Alt+F8</kbd>, e use a mesma
+              combinação em uma ação <strong>Tecla de atalho</strong> no Stream
+              Deck. Mantenha a Central aberta.
+            </li>
           </ol>
-          <p>A aba <strong>Alertas</strong> também permite monitorar fontes externas, como widgets de alerta com texto. Configure o endereço e o seletor do texto e use a prévia para conferir a detecção.</p>
+          <p>
+            A aba <strong>Alertas</strong> também permite monitorar fontes
+            externas, como widgets de alerta com texto. Configure o endereço e o
+            seletor do texto e use a prévia para conferir a detecção.
+          </p>
         </details>
 
         <details class="studio-card">
           <summary>Fontes e faixas de áudio no OBS</summary>
           <ol>
-            <li><strong>Imagem dos alertas</strong> — em <strong>Mini alertas</strong>, copie a URL do widget de alertas. No OBS, adicione uma fonte <strong>Navegador</strong>, cole a URL com <strong>Arquivo local</strong> desmarcado e posicione a fonte na cena.</li>
-            <li><strong>Som dos alertas</strong> — selecione <strong>OBS · Fonte Navegador de áudio</strong>, clique em <strong>Salvar saída</strong> e copie a URL de áudio. Crie uma segunda fonte <strong>Navegador</strong> no OBS, cole a URL e marque <strong>Controlar áudio via OBS</strong>. Use <strong>Testar no OBS</strong> e confira o medidor dessa fonte.</li>
-            <li><strong>Faixa isolada</strong> — nas <strong>Propriedades avançadas de áudio</strong> do OBS, reserve uma faixa para a fonte de alertas e desmarque essa faixa nas outras fontes. Em <strong>Configurações → Saída → Gravação</strong>, habilite as faixas que quer salvar. Se quiser ouvir os alertas também na live, marque a faixa da transmissão na fonte de alertas.</li>
-            <li><strong>SR, leitor e som do chat</strong> — selecione as saídas nas abas <strong>SR / Spotify</strong> e <strong>Leitor</strong>. Para separá-las no OBS, capture os processos <code>kaia_musica.exe</code>, <code>kaia_leitura.exe</code> e <code>kaia_tts.exe</code> individualmente, ou use dispositivos de áudio virtuais distintos.</li>
+            <li>
+              <strong>Imagem dos alertas</strong> — em
+              <strong>Widgets / OBS</strong>, copie a URL do widget de alertas.
+              No OBS, adicione uma fonte <strong>Navegador</strong>, cole a URL
+              com <strong>Arquivo local</strong> desmarcado e posicione a fonte
+              na cena.
+            </li>
+            <li>
+              <strong>Som dos alertas</strong> — selecione
+              <strong>OBS · Fonte Navegador de áudio</strong>, clique em
+              <strong>Salvar saída</strong> e copie a URL de áudio. Crie uma
+              segunda fonte <strong>Navegador</strong> no OBS, cole a URL e
+              marque <strong>Controlar áudio via OBS</strong>. Use
+              <strong>Testar no OBS</strong> e confira o medidor dessa fonte.
+            </li>
+            <li>
+              <strong>Faixa isolada</strong> — nas
+              <strong>Propriedades avançadas de áudio</strong> do OBS, reserve
+              uma faixa para a fonte de alertas e desmarque essa faixa nas
+              outras fontes. Em
+              <strong>Configurações → Saída → Gravação</strong>, habilite as
+              faixas que quer salvar. Se quiser ouvir os alertas também na live,
+              marque a faixa da transmissão na fonte de alertas.
+            </li>
+            <li>
+              <strong>SR, leitor e som do chat</strong> — selecione as saídas
+              nas abas <strong>SR / Spotify</strong> e <strong>Leitor</strong>.
+              Para separá-las no OBS, capture os processos
+              <code>kaia_musica.exe</code>, <code>kaia_leitura.exe</code> e
+              <code>kaia_tts.exe</code> individualmente, ou use dispositivos de
+              áudio virtuais distintos.
+            </li>
           </ol>
         </details>
 
         <details class="studio-card">
+          <summary>Mensagens automáticas e cargos locais</summary>
+          <p>
+            Abra <strong>Mensagens</strong> e preencha nome, mensagem, intervalo
+            e destinos. Salve com o temporizador ativo para enviar
+            periodicamente enquanto a Central estiver aberta. Você pode editar,
+            pausar, excluir ou usar <strong>Enviar agora</strong> para testar.
+            Ao reabrir, o intervalo começa novamente.
+          </p>
+          <p>
+            Em Permissões, selecione a plataforma, informe o usuário e dê um
+            nome ao cargo local. Marque os comandos permitidos e salve. Use
+            <strong>Revogar</strong> para retirar o acesso. Para YouTube,
+            informe o ID do canal da pessoa. Os comandos disponíveis incluem
+            <code>!skip</code>, <code>!pausa</code>, <code>!play</code>,
+            <code>!stop</code> e <code>!anterior</code>. O SR precisa estar
+            ativo.
+          </p>
+          <p>
+            Espectadores comuns votam com <code>!skip</code>. Na aba SR /
+            Spotify, configure quantos votos são necessários e o prazo da
+            rodada. O padrão inicial é 3 votos em 120 segundos. Pessoas
+            autorizadas a pular executam diretamente. Cada conta tem um voto por
+            rodada na respectiva plataforma.
+          </p>
+        </details>
+        <details class="studio-card">
           <summary>Leitor, pedidos de música e contadores</summary>
           <ul>
-            <li><strong>Leitor</strong> — escolha voz, volume e dispositivo de saída. Configure o intervalo, usuários prioritários e bloqueios e use <strong>Testar voz</strong> antes de ativar.</li>
-            <li><strong>SR / Spotify</strong> — ative pedidos pelo chat, selecione a saída da música e ajuste as filas. Quando ativado, <code>!sr</code> seguido de uma música ou link envia um pedido para a fila. Use os controles do player para navegar, pausar ou reorganizar.</li>
-            <li><strong>Widget de chat</strong> — em <strong>Widget</strong>, copie a URL do chat para uma fonte Navegador do OBS. Ajuste fonte, layout e cores na prévia.</li>
-            <li><strong>Contador de espectadores</strong> — ative os contadores na aba <strong>Widget</strong> e escolha as plataformas. As contas Twitch, Kick e YouTube vêm de <strong>Conexões e resgates</strong>. No OBS, use a URL do contador como fonte independente para posicioná-la sem cobrir o chat ou os alertas.</li>
-            <li><strong>Transcrição</strong> — mensagens e avisos de resgate ficam em um único TXT. O caminho padrão é <code>%APPDATA%\Central de Live\chat.txt</code>.</li>
+            <li>
+              <strong>Leitor</strong> — escolha voz, volume e dispositivo de
+              saída. Configure o intervalo, usuários prioritários e bloqueios e
+              use <strong>Testar voz</strong> antes de ativar.
+            </li>
+            <li>
+              <strong>SR / Spotify</strong> — ative pedidos pelo chat, selecione
+              a saída da música e ajuste as filas. Quando ativado,
+              <code>!sr</code> seguido de uma música ou link envia um pedido
+              para a fila. Use os controles do player para navegar, pausar ou
+              reorganizar.
+            </li>
+            <li>
+              <strong>Widget de chat</strong> — em <strong>Widget</strong>,
+              copie a URL do chat para uma fonte Navegador do OBS. Ajuste fonte,
+              layout e cores na prévia.
+            </li>
+            <li>
+              <strong>Contador de espectadores</strong> — ative os contadores na
+              aba <strong>Contadores</strong> e escolha as plataformas. As
+              contas Twitch, Kick e YouTube vêm de
+              <strong>Contas e conexões</strong>. No OBS, use a URL do contador
+              como fonte independente para posicioná-la sem cobrir o chat ou os
+              alertas.
+            </li>
+            <li>
+              <strong>Transcrição</strong> — mensagens e avisos de resgate ficam
+              em um único TXT. O caminho padrão é
+              <code>%APPDATA%\Central de Live\chat.txt</code>.
+            </li>
           </ul>
+        </details>
+        <details class="studio-card">
+          <summary>Personalizar mensagens dos eventos</summary>
+          <p>
+            Na aba Alertas, edite os modelos, confira a prévia e clique em
+            Salvar mensagens automáticas. {usuario} vira o nome da pessoa e
+            {musica} vira o título resolvido do SR. Cada modelo lista suas
+            variáveis. Os modelos de seguidor e inscrição são compartilhados:
+            {plataforma} identifica a origem. Em Contas e conexões, configure a
+            recepção de eventos de cada plataforma e marque os modelos
+            desejados. Twitch exige autorização dos eventos. Kick exige webhook
+            HTTPS público e events:subscribe. Starvios exige login do dono do
+            canal. YouTube entrega eventos de membros no chat ao vivo, mas não
+            follows individuais. O agradecimento vai somente ao canal de origem.
+            As respostas de controle do SR são enviadas ao canal de origem do
+            comando. Resgates mantêm sua mensagem no chat da Central. Para
+            !discord ou outros comandos, edite a resposta em Mensagens.
+          </p>
         </details>
       </section>
       <section id="studio-panel" class="feature-panel" hidden data-i18n-ignore>
-        <h1>Conexões e resgates</h1>
+        <div class="settings-heading">
+          <span class="settings-eyebrow">CONEXÕES</span>
+          <h1>Contas e conexões</h1>
+          <p>
+            Autorize as plataformas e acompanhe as sessões. As regras de pontos
+            ficam em Resgates.
+          </p>
+        </div>
         <p id="studio-feedback" role="status"></p>
+        <section class="studio-card connection-summary">
+          <h2>Estado das conexões</h2>
+          <p id="activity-connections-status" role="status"></p>
+          <p id="activity-action-status" role="status"></p>
+        </section>
         <section class="studio-card">
           <h2>Twitch</h2>
           <p id="studio-twitch" role="status">Desconectada</p>
@@ -147,9 +511,15 @@
           </div>
           <details id="studio-twitch-config">
             <summary>Configuração do aplicativo</summary>
-            <p>Cadastre a Central como aplicativo Público uma vez. Use a conta do canal na hora de autorizar.</p>
+            <p>
+              Cadastre a Central como aplicativo Público uma vez. Use a conta do
+              canal na hora de autorizar.
+            </p>
             <button id="studio-twitch-portal">Abrir console da Twitch</button>
-            <label>Client ID público <input id="studio-client" autocomplete="off" spellcheck="false" /></label>
+            <label
+              >Client ID público
+              <input id="studio-client" autocomplete="off" spellcheck="false"
+            /></label>
             <button id="studio-twitch-save">Salvar Client ID</button>
           </details>
         </section>
@@ -162,13 +532,40 @@
           </div>
           <details id="studio-kick-config">
             <summary>Configuração do aplicativo</summary>
-            <p>Cadastre a URL de retorno <code>http://localhost:19350/central/kick</code> nas configurações de desenvolvedor.</p>
+            <p>
+              Cadastre a URL de retorno
+              <code>http://localhost:19350/central/kick</code> nas configurações
+              de desenvolvedor.
+            </p>
             <button id="studio-kick-portal">Abrir configurações da Kick</button>
-            <label>Client ID <input id="studio-kick-client" autocomplete="off" spellcheck="false" /></label>
-            <label>Client Secret <input id="studio-kick-secret" type="password" autocomplete="off" /></label>
+            <label
+              >Client ID
+              <input
+                id="studio-kick-client"
+                autocomplete="off"
+                spellcheck="false"
+            /></label>
+            <label
+              >Client Secret
+              <input id="studio-kick-secret" type="password" autocomplete="off"
+            /></label>
             <button id="studio-kick-save">Salvar aplicativo Kick</button>
           </details>
-          <p>A conexão de conta autoriza o acesso aos pontos do canal. O status de leitura do chat fica na barra inferior.</p>
+          <p>
+            A conexão de conta autoriza o acesso aos pontos do canal. O status
+            de leitura do chat fica na barra inferior.
+          </p>
+          <details class="connection-details">
+            <summary>Receber follows e inscrições</summary>
+            <p>
+              Habilite Webhooks no portal Kick com uma URL HTTPS pública estável
+              encaminhando apenas /integrations/kick/events ao receptor abaixo.
+              localhost sozinho não recebe eventos. Reconecte para autorizar
+              events:subscribe e ative os eventos.
+            </p>
+            <p id="activity-kick-receiver"></p>
+            <button id="activity-kick-subscribe">Ativar eventos Kick</button>
+          </details>
         </section>
         <section class="studio-card">
           <h2>YouTube Live</h2>
@@ -179,156 +576,210 @@
           </div>
           <details id="studio-youtube-config">
             <summary>Configuração do aplicativo</summary>
-            <p>Habilite a YouTube Data API v3 e crie um cliente OAuth do tipo Aplicativo para computador.</p>
+            <p>
+              Habilite a YouTube Data API v3 e crie um cliente OAuth do tipo
+              Aplicativo para computador.
+            </p>
             <button id="studio-youtube-portal">Abrir Google Cloud</button>
-            <label>Client ID <input id="studio-youtube-client" autocomplete="off" spellcheck="false" /></label>
-            <label>Client Secret <input id="studio-youtube-secret" type="password" autocomplete="off" /></label>
+            <label
+              >Client ID
+              <input
+                id="studio-youtube-client"
+                autocomplete="off"
+                spellcheck="false"
+            /></label>
+            <label
+              >Client Secret
+              <input
+                id="studio-youtube-secret"
+                type="password"
+                autocomplete="off"
+            /></label>
             <div class="feature-actions">
-              <button id="studio-youtube-save">Salvar aplicativo YouTube</button>
-              <button id="studio-youtube-import">Importar JSON do Google</button>
+              <button id="studio-youtube-save">
+                Salvar aplicativo YouTube
+              </button>
+              <button id="studio-youtube-import">
+                Importar JSON do Google
+              </button>
             </div>
           </details>
         </section>
         <section class="studio-card">
           <h2>Starvios</h2>
-          <p>Use o canal público para leitura na Central. A conta e o envio de mensagens ficam no site do Starvios.</p>
-          <label>Canal ou URL <input id="studio-starvios-channel" autocomplete="off" /></label>
+          <p>
+            O canal público permite ler o chat. Conecte a conta abaixo para
+            enviar mensagens e receber eventos.
+          </p>
+          <label
+            >Canal ou URL
+            <input id="studio-starvios-channel" autocomplete="off"
+          /></label>
           <div class="feature-actions">
             <button id="studio-starvios-save">Adicionar canal público</button>
             <button id="studio-starvios-portal">Abrir Starvios</button>
           </div>
           <p id="studio-starvios-status" role="status"></p>
-        </section>
-        <section class="studio-card">
-          <h2>Mini alertas de pontos do canal</h2>
-          <p id="studio-kick-rewards-status" role="status"></p>
-          <label for="studio-alert-overlay-url">Widget de alertas para o OBS</label>
-          <div class="studio-inline">
-            <input id="studio-alert-overlay-url" readonly />
-            <button id="studio-copy-alert-overlay">Copiar URL</button>
-          </div>
-          <p>No OBS, adicione uma fonte Navegador com esta URL. Use Testar combinação para verificar o widget.</p>
-          <p id="studio-alert-overlay-status" role="status"></p>
-          <label>Saída de áudio das automações
-            <select id="studio-alert-output">
-              <option value="">Padrão do Windows</option>
-              <option value="@obs">OBS · Fonte Navegador de áudio</option>
-            </select>
-          </label>
-          <label for="studio-obs-audio-url">URL da fonte de áudio do OBS</label>
-          <div class="studio-inline">
-            <input id="studio-obs-audio-url" readonly />
-            <button id="studio-copy-obs-audio">Copiar URL de áudio</button>
-            <button id="studio-test-obs-audio">Testar no OBS</button>
-          </div>
-          <p>Na fonte Navegador, marque Controlar áudio via OBS para receber os alertas em um canal próprio do mixer.</p>
+          <p>
+            Entre com a conta dona do canal para receber eventos e enviar
+            mensagens. A sessão fica neste computador.
+          </p>
           <div class="feature-actions">
-            <button id="studio-alert-output-refresh">Buscar dispositivos</button>
-            <button id="studio-alert-output-save">Salvar saída</button>
+            <button id="activity-starvios-connect">
+              Conectar conta Starvios</button
+            ><button id="activity-starvios-disconnect">
+              Desconectar conta Starvios
+            </button>
           </div>
-          <label>Plataforma da recompensa
-            <select id="studio-reward-provider"><option value="twitch">Twitch</option><option value="kick">Kick</option></select>
-          </label>
-          <div class="feature-actions">
-            <button id="studio-reload">Carregar recompensas</button>
-            <button id="studio-connect-kick-rewards" hidden>Conectar Kick</button>
-          </div>
-          <p id="studio-rewards-status" role="status"></p>
-          <label>Recompensa
-            <select id="studio-rewards"><option value="">Selecione uma recompensa</option></select>
-          </label>
-          <label>Vincular a uma recompensa da outra plataforma
-            <select id="studio-partner"><option value="">Sem vínculo</option></select>
-          </label>
-          <label for="studio-visual-file">Vídeo, GIF ou imagem</label>
-          <div class="studio-inline">
-            <input id="studio-visual-file" readonly />
-            <button id="studio-pick-visual">Escolher</button>
-            <button id="studio-clear-visual">Limpar</button>
-          </div>
-          <label for="studio-audio-file">Áudio separado</label>
-          <div class="studio-inline">
-            <input id="studio-audio-file" readonly />
-            <button id="studio-pick-audio">Escolher</button>
-            <button id="studio-clear-audio">Limpar</button>
-          </div>
-          <button id="studio-use-linked-audio" hidden>Usar áudio já vinculado</button>
-          <p>O áudio separado toca junto com o visual. Se ficar vazio, o vídeo usa sua própria faixa de áudio.</p>
-          <div class="studio-inline">
-            <label>Volume (%) <input id="studio-volume" type="number" min="0" max="100" value="75" /></label>
-            <label>Duração máxima (s) <input id="studio-duration" type="number" min="1" max="120" value="8" /></label>
-          </div>
-          <label>Atalho global para Stream Deck <input id="studio-hotkey" maxlength="80" placeholder="Ex.: Ctrl+Alt+F8" /></label>
-          <div class="feature-actions">
-            <button id="studio-save">Salvar regra</button>
-            <button id="studio-test">Testar regra salva</button>
-            <button id="studio-preview-file">Testar combinação</button>
-            <button id="studio-remove">Remover regra</button>
-          </div>
-          <details>
-            <summary>Criar recompensa nos canais</summary>
-            <label>Nome <input id="studio-reward-title" maxlength="45" /></label>
-            <label>Custo em pontos <input id="studio-reward-cost" type="number" min="1" /></label>
-            <label>Descrição <input id="studio-reward-description" maxlength="200" /></label>
-            <label><input id="studio-create-twitch" type="checkbox" /> Twitch</label>
-            <label><input id="studio-create-kick" type="checkbox" /> Kick</label>
-            <p>A mídia dos campos acima fica na Central e toca no resgate.</p>
-            <button id="studio-create-rewards">Criar recompensas selecionadas</button>
-          </details>
-          <details><summary>Últimos resgates</summary><ol id="studio-history"></ol></details>
         </section>
-        <section class="studio-card">
-          <h2>Automações locais</h2>
-          <details>
-            <summary>Criar comando de chat</summary>
-            <label>Nome <input id="studio-command-name" maxlength="80" /></label>
-            <label>Gatilho <input id="studio-command-trigger" placeholder="!comando" maxlength="41" /></label>
-            <label>Resposta <input id="studio-command-response" maxlength="500" /></label>
-            <button id="studio-command-create">Criar comando</button>
-          </details>
-          <div class="studio-inline">
-            <select id="studio-collection" aria-label="Dados das automações">
-              <option value="commands">Comandos</option>
-              <option value="currency">Moedas</option>
-              <option value="inventory">Inventários</option>
-              <option value="counters">Contadores</option>
-              <option value="users">Usuários</option>
-              <option value="quotes">Citações</option>
-            </select>
-            <button id="studio-sync">Atualizar</button>
+
+        <details class="studio-card">
+          <summary>Credenciais alternativas dos contadores</summary>
+          <p>
+            Use estas credenciais somente quando não houver uma conta vinculada.
+            Os contadores normalmente reutilizam as conexões acima.
+          </p>
+          <div id="viewer-account-credentials"></div>
+        </details>
+        <h2>Contas de música</h2>
+        <details class="type-panel" open>
+          <summary>
+            Sessão do YouTube<span
+              >Login e cookies automáticos, sem importar arquivo</span
+            >
+          </summary>
+          <div class="type-content">
+            <p>
+              Abra a sessão dedicada do SR no Chrome/Edge e faça login no
+              YouTube se necessário. A sessão é reutilizada e sincronizada
+              automaticamente. Não é preciso procurar cookies ou cache em
+              pastas. Restrições do YouTube podem exigir nova autenticação ou
+              impedir algumas faixas.
+            </p>
+            <div class="feature-actions">
+              <button id="youtube-connect">Conectar YouTube</button
+              ><button id="youtube-test">Testar acesso sem tocar</button
+              ><button id="youtube-disconnect">Desconectar YouTube</button>
+            </div>
+            <p id="youtube-status" role="status"></p>
           </div>
-          <label>Buscar <input id="studio-search" type="search" maxlength="80" /></label>
-          <p id="studio-automation-count"></p>
-          <label>Argumentos do comando <input id="studio-args" maxlength="1000" /></label>
-          <ul id="studio-automation-list"></ul>
-        </section>
+        </details>
+        <details class="type-panel" open>
+          <summary>
+            Spotify: minhas credenciais<span
+              >Configure sua própria aplicação</span
+            >
+          </summary>
+          <div class="type-content">
+            <label
+              ><input id="spotify-enabled" type="checkbox" /> Exibir Spotify no
+              player e no widget</label
+            >
+            <label
+              >Client ID<input
+                id="spotify-client-id"
+                type="text"
+                autocomplete="off" /></label
+            ><label
+              >Client Secret (opcional; PKCE funciona sem ele)<input
+                id="spotify-client-secret"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Deixe vazio para manter o segredo salvo" /></label
+            ><label class="check-row"
+              ><input id="spotify-clear-secret" type="checkbox" /> Remover
+              segredo salvo e usar somente PKCE</label
+            ><label
+              >Redirect URI — copie exatamente<input
+                id="spotify-redirect"
+                type="text"
+                readonly
+            /></label>
+            <div class="feature-actions">
+              <button id="spotify-save">Salvar minhas credenciais</button
+              ><button id="spotify-connect">Conectar Spotify</button
+              ><button id="spotify-disconnect">Desconectar Spotify</button>
+            </div>
+            <p id="spotify-status" role="status"></p>
+            <p id="spotify-now"></p>
+            <p>
+              O Spotify publica a faixa nos HUDs; a reprodução continua no
+              aplicativo Spotify. A autorização e os tokens são renovados
+              automaticamente. O SR reproduz pedidos do YouTube, não baixa áudio
+              do Spotify.
+            </p>
+            <h3>Como obter e inserir os dados</h3>
+            <ol>
+              <li>
+                Abra o Spotify Developer Dashboard e entre com sua conta.
+                Aplicações em Development Mode exigem Premium do proprietário e
+                usuários autorizados no painel.
+              </li>
+              <li>
+                Crie uma aplicação, escolha Web API e cadastre o Redirect URI
+                mostrado acima. Use 127.0.0.1, não localhost.
+              </li>
+              <li>
+                Nas configurações da aplicação, copie o Client ID para o campo
+                desta aba. O fluxo PKCE de aplicativo desktop dispensa Client
+                Secret; o campo opcional permite guardar o seu, se utilizado.
+              </li>
+              <li>
+                Clique Salvar minhas credenciais, depois Conectar Spotify.
+                Autorize no navegador oficial e volte ao Kaia Chat.
+              </li>
+              <li>
+                Toque uma música no Spotify. A faixa aparecerá aqui e nos HUDs.
+                Não envie suas chaves ou tokens ao GitHub.
+              </li>
+            </ol>
+            <div class="feature-actions">
+              <button data-media-link="dashboard">Abrir painel Spotify</button
+              ><button data-media-link="spotifyDocs">Guia oficial</button
+              ><button data-media-link="spotifyVideo">
+                Vídeo: obter Client ID</button
+              ><button data-media-link="redirectVideo">
+                Vídeo: Redirect URI
+              </button>
+            </div>
+            <p>
+              Vídeos complementares em inglês podem mostrar uma interface
+              antiga. Para a URL e o fluxo atuais, siga este tutorial e o guia
+              oficial.
+            </p>
+          </div>
+        </details>
       </section>
       <section id="alerts-panel" class="feature-panel" hidden>
-        <h1>Alertas para o streamer</h1>
+        <h1>Alertas e mensagens de eventos</h1>
+        <h2>Mensagens automáticas</h2>
         <p>
-          Adicione os URLs de widget usados no OBS. Streamlabs, StreamElements
-          ou serviço personalizado. Cada fonte tem seu próprio nome/plataforma.
-          Os widgets ficam sem som; o texto reconhecido é lido somente na saída
-          do Leitor. Ativar fontes de alerta também permite avisos com a leitura
-          normal desligada.
+          Edite o texto completo e use as variáveis indicadas em cada mensagem.
+          A prévia não envia mensagens. Salve para aplicar. O SR também precisa
+          estar com o anúncio no chat ativado na aba SR.
         </p>
         <p>
-          Compatível com texto HTML acessível. Conteúdo em canvas, imagem/vídeo
-          ou iframe de outro domínio pode não ser legível. Não é OCR e não
-          identifica eventos ausentes do widget. Use o botão de teste do seu
-          serviço após salvar. Não compartilhe seus URLs privados.
+          Os modelos de seguidor e inscrição são compartilhados entre as
+          plataformas. {plataforma} identifica a origem. O agradecimento é
+          enviado somente ao canal onde ocorreu o evento. Ative os modelos
+          desejados e configure a recepção em Contas e conexões. Os resgates
+          continuam no chat da Central.
         </p>
-        <div id="alert-sources"></div>
-        <button id="add-alert-source">Nova fonte de alerta</button
-        ><button id="save-alerts">Salvar e monitorar fontes</button>
-        <p id="alerts-status" role="status"></p>
-        <button id="test-alert-voice">Testar voz de um alerta</button>
-        <p class="announcement-status" role="status">
-          Os avisos usam a saída salva no Leitor.
+        <p>
+          <button type="button" data-guide-tab="studio">
+            Gerenciar contas e recepção de eventos →
+          </button>
         </p>
-        <h2>Último alerta recebido</h2>
-        <p id="last-alert">Nenhum alerta recebido nesta sessão.</p>
-        <button id="repeat-alert">Ler último alerta novamente</button>
+        <div id="message-templates"></div>
+        <button id="save-message-templates">
+          Salvar mensagens automáticas
+        </button>
+        <p id="message-templates-status" role="status"></p>
+        <p>
+          Comandos como !discord e mensagens com timer: edite as respostas na
+          aba Mensagens. Use $username para o nome da pessoa e $args para o
+          texto após o comando.
+        </p>
       </section>
       <section id="reader-panel" class="feature-panel" hidden>
         <h1>Leitor de chat</h1>
@@ -482,6 +933,34 @@
           no OBS. A leitura não troca para a saída padrão se o dispositivo
           escolhido ficar indisponível. Voz Edge requer internet.
         </p>
+        <section class="studio-card">
+          <h2>Leitura de alertas externos</h2>
+          <p>
+            Adicione os URLs de widget usados no OBS. Streamlabs, StreamElements
+            ou serviço personalizado. Cada fonte tem seu próprio
+            nome/plataforma. Os widgets ficam sem som; o texto reconhecido é
+            lido somente na saída do Leitor. Ativar fontes de alerta também
+            permite avisos com a leitura normal desligada.
+          </p>
+          <p>
+            Compatível com texto HTML acessível. Conteúdo em canvas,
+            imagem/vídeo ou iframe de outro domínio pode não ser legível. Não é
+            OCR e não identifica eventos ausentes do widget. Use o botão de
+            teste do seu serviço após salvar. Não compartilhe seus URLs
+            privados.
+          </p>
+          <div id="alert-sources"></div>
+          <button id="add-alert-source">Nova fonte de alerta</button
+          ><button id="save-alerts">Salvar e monitorar fontes</button>
+          <p id="alerts-status" role="status"></p>
+          <button id="test-alert-voice">Testar voz de um alerta</button>
+          <p class="announcement-status" role="status">
+            Os avisos usam a saída salva no Leitor.
+          </p>
+          <h2>Último alerta recebido</h2>
+          <p id="last-alert">Nenhum alerta recebido nesta sessão.</p>
+          <button id="repeat-alert">Ler último alerta novamente</button>
+        </section>
       </section>
       <section id="sr-panel" class="feature-panel" hidden>
         <h1>Song Request / Spotify</h1>
@@ -602,6 +1081,18 @@
               ><input id="sr-announceRequests" type="checkbox" checked />Ler
               solicitante e título quando o pedido for aceito</label
             >
+            <label class="check-row"
+              ><input id="sr-announceChat" type="checkbox" checked />Anunciar no
+              chat a música adicionada</label
+            >
+            <div class="feature-actions" id="sr-announce-chat-targets">
+              <label
+                ><input type="checkbox" value="twitch" checked /> Twitch</label
+              >
+              <label><input type="checkbox" value="kick" checked /> Kick</label>
+              <label><input type="checkbox" value="youtube" /> YouTube</label>
+              <label><input type="checkbox" value="starvios" /> Starvios</label>
+            </div>
           </div>
           <p>
             Salve no botão Salvar SR. Pedidos são os próximos a tocar depois da
@@ -646,6 +1137,8 @@
           <ol id="sr-background-queue"></ol>
           <button data-sr="save_playlist">Salvar playlist</button>
           <button data-sr="restore_playlist">Recuperar última playlist</button>
+          <button data-sr="select_playlist">Selecionar playlist salva…</button>
+          <p id="sr-playlist-status" role="status"></p>
           <p>
             A recuperação substitui a playlist aguardando e mantém a música
             atual e os pedidos do chat.
@@ -673,215 +1166,71 @@
           <ol id="sr-history"></ol>
           <button data-sr="limpar_historico">Limpar histórico do SR</button>
         </details>
-        <details class="type-panel" open>
-          <summary>
-            Sessão do YouTube<span
-              >Login e cookies automáticos, sem importar arquivo</span
-            >
-          </summary>
-          <div class="type-content">
-            <p>
-              Abra a sessão dedicada do SR no Chrome/Edge e faça login no
-              YouTube se necessário. A sessão é reutilizada e sincronizada
-              automaticamente. Não é preciso procurar cookies ou cache em
-              pastas. Restrições do YouTube podem exigir nova autenticação ou
-              impedir algumas faixas.
-            </p>
-            <div class="feature-actions">
-              <button id="youtube-connect">Conectar YouTube</button
-              ><button id="youtube-test">Testar acesso sem tocar</button
-              ><button id="youtube-disconnect">Desconectar YouTube</button>
-            </div>
-            <p id="youtube-status" role="status"></p>
-          </div>
-        </details>
-        <details class="type-panel" open>
-          <summary>
-            Spotify: minhas credenciais<span
-              >Configure sua própria aplicação</span
-            >
-          </summary>
-          <div class="type-content">
-            <label
-              ><input id="spotify-enabled" type="checkbox" /> Exibir Spotify no
-              player e no widget</label
-            >
-            <label
-              >Client ID<input
-                id="spotify-client-id"
-                type="text"
-                autocomplete="off" /></label
-            ><label
-              >Client Secret (opcional; PKCE funciona sem ele)<input
-                id="spotify-client-secret"
-                type="password"
-                autocomplete="new-password"
-                placeholder="Deixe vazio para manter o segredo salvo" /></label
-            ><label class="check-row"
-              ><input id="spotify-clear-secret" type="checkbox" /> Remover
-              segredo salvo e usar somente PKCE</label
-            ><label
-              >Redirect URI — copie exatamente<input
-                id="spotify-redirect"
-                type="text"
-                readonly
-            /></label>
-            <div class="feature-actions">
-              <button id="spotify-save">Salvar minhas credenciais</button
-              ><button id="spotify-connect">Conectar Spotify</button
-              ><button id="spotify-disconnect">Desconectar Spotify</button>
-            </div>
-            <p id="spotify-status" role="status"></p>
-            <p id="spotify-now"></p>
-            <p>
-              O Spotify publica a faixa nos HUDs; a reprodução continua no
-              aplicativo Spotify. A autorização e os tokens são renovados
-              automaticamente. O SR reproduz pedidos do YouTube, não baixa áudio
-              do Spotify.
-            </p>
-            <h3>Como obter e inserir os dados</h3>
-            <ol>
-              <li>
-                Abra o Spotify Developer Dashboard e entre com sua conta.
-                Aplicações em Development Mode exigem Premium do proprietário e
-                usuários autorizados no painel.
-              </li>
-              <li>
-                Crie uma aplicação, escolha Web API e cadastre o Redirect URI
-                mostrado acima. Use 127.0.0.1, não localhost.
-              </li>
-              <li>
-                Nas configurações da aplicação, copie o Client ID para o campo
-                desta aba. O fluxo PKCE de aplicativo desktop dispensa Client
-                Secret; o campo opcional permite guardar o seu, se utilizado.
-              </li>
-              <li>
-                Clique Salvar minhas credenciais, depois Conectar Spotify.
-                Autorize no navegador oficial e volte ao Kaia Chat.
-              </li>
-              <li>
-                Toque uma música no Spotify. A faixa aparecerá aqui e nos HUDs.
-                Não envie suas chaves ou tokens ao GitHub.
-              </li>
-            </ol>
-            <div class="feature-actions">
-              <button data-media-link="dashboard">Abrir painel Spotify</button
-              ><button data-media-link="spotifyDocs">Guia oficial</button
-              ><button data-media-link="spotifyVideo">
-                Vídeo: obter Client ID</button
-              ><button data-media-link="redirectVideo">
-                Vídeo: Redirect URI
-              </button>
-            </div>
-            <p>
-              Vídeos complementares em inglês podem mostrar uma interface
-              antiga. Para a URL e o fluxo atuais, siga este tutorial e o guia
-              oficial.
-            </p>
-          </div>
-        </details>
-        <details class="type-panel">
-          <summary>HUDs, editor e soundbar</summary>
-          <div class="type-content">
-            <label>HUD padrão<input id="sr-url" readonly /></label
-            ><label
-              >HUD personalizado<input id="sr-custom-url" readonly
-            /></label>
-            <div class="feature-actions">
-              <button data-sr-open="standard">Abrir HUD padrão</button
-              ><button data-sr-open="custom">Abrir HUD personalizado</button
-              ><button data-sr-open="editor">
-                Editor completo de HUD / CSS
-              </button>
-            </div>
-            <iframe
-              id="sr-preview"
-              title="Prévia do HUD SR"
-              sandbox="allow-scripts allow-same-origin"
-            ></iframe
-            ><label class="check-row"
-              ><input id="sr-loopback-enabled" type="checkbox" /> Medir áudio da
-              saída para soundbar</label
-            ><label
-              >Saída da soundbar<select id="sr-loopback-output">
-                <option value="">Saída padrão</option>
-              </select></label
-            ><button id="sr-loopback-save">Aplicar soundbar</button>
-            <p>
-              O medidor usa o áudio da saída selecionada. Outros sons no mesmo
-              dispositivo também podem aparecer. O editor preserva temas, CSS,
-              RGB e barras do pacote original.
-            </p>
-          </div>
-        </details>
+
+        <section class="studio-card">
+          <h2>Comandos e votação</h2>
+          <label
+            >Comando para promover música
+            <input
+              id="automation-promote-command"
+              maxlength="31"
+              value="!promote"
+            />
+          </label>
+          <button id="automation-promote-save">
+            Salvar comando de promoção
+          </button>
+          <p>
+            Exemplos: !promote 3 ou !promote Nome da música. A música vai para o
+            início da fila e será a próxima após a atual. A numeração considera
+            a fila completa de músicas aguardando, sem faixas com erro.
+          </p>
+          <label
+            >Votos de espectadores para !skip
+            <input
+              id="automation-vote-required"
+              type="number"
+              min="1"
+              max="10000"
+              value="3"
+            />
+          </label>
+          <label
+            >Prazo da votação em segundos
+            <input
+              id="automation-vote-seconds"
+              type="number"
+              min="10"
+              max="3600"
+              value="120"
+            />
+          </label>
+          <button id="automation-vote-save">Salvar votação</button>
+          <p>
+            Espectadores comuns votam com !skip ou !pular. Cada usuário conta
+            uma vez na rodada. Quem tem permissão para pular executa
+            diretamente. A rodada é reiniciada ao mudar a música ou ao terminar
+            o prazo.
+          </p>
+          <button type="button" data-guide-tab="permissions">
+            Definir quem pode usar os comandos →
+          </button>
+        </section>
+        <div class="settings-links">
+          <button type="button" data-guide-tab="studio">
+            Contas de música →</button
+          ><button type="button" data-guide-tab="widget">
+            HUD e soundbar →
+          </button>
+        </div>
       </section>
-      <section id="widget-panel" hidden>
-        <h1>Widget para sua live</h1>
+      <section id="widget-panel" class="settings-page" hidden>
+        <h1>Widgets e fontes do OBS</h1>
         <p>
-          Adicione a URL como Fonte de navegador no OBS. Mantenha o Kaia Chat
-          aberto, mesmo com a janela oculta.
+          Adicione a URL como Fonte de navegador no OBS. Mantenha a Central de
+          Live aberto, mesmo com a janela oculta.
         </p>
-        <details id="viewers-panel">
-          <summary>Contadores de espectadores — chat e OBS</summary>
-          <label
-            ><input id="viewer-enabled" type="checkbox" /> Ativar
-            contadores</label
-          >
-          <label
-            ><input id="viewer-showChat" type="checkbox" /> Mostrar no
-            chat</label
-          >
-          <label
-            ><input id="viewer-showOverlay" type="checkbox" /> Mostrar no modo
-            transparente</label
-          >
-          <label
-            >Posição no overlay<select id="viewer-position">
-              <option value="top">Superior</option>
-              <option value="bottom">Inferior</option>
-            </select></label
-          >
-          <label
-            >Atualização (segundos)<input
-              id="viewer-interval"
-              type="number"
-              min="30"
-              max="300"
-              value="30"
-          /></label>
-          <label
-            >Fonte (px)<input
-              id="viewer-fontSize"
-              type="number"
-              min="12"
-              max="48"
-              value="18"
-          /></label>
-          <label
-            >Cor<input id="viewer-color" type="color" value="#ffffff"
-          /></label>
-          <p>
-            Selecione abaixo quais plataformas incluir. Desmarcar não desconecta
-            o chat. O total soma as plataformas selecionadas e disponíveis, não
-            pessoas únicas. “—” significa sem dados; o total fica parcial quando
-            falta uma plataforma.
-          </p>
-          <p>
-            Twitch e Kick: cadastre uma aplicação no portal de desenvolvedores
-            da plataforma e informe Client ID e Client Secret. Não são seu login
-            e senha. As credenciais são protegidas pelo Windows e não vão para
-            os widgets. Consulte docs/CONTADORES.md no pacote.
-          </p>
-          <label
-            ><input id="viewer-showTotal" type="checkbox" /> Mostrar o total
-            junto às plataformas selecionadas</label
-          >
-          <div id="viewer-sources"></div>
-          <button id="save-viewers">Salvar e atualizar contadores</button>
-          <p id="viewer-status" role="status"></p>
-          <h3>Widgets para Fonte de navegador no OBS</h3>
-          <div id="viewer-urls" class="viewer-urls"></div>
-        </details>
+
         <label>URL do widget<input id="widget-url" readonly /></label>
         <div class="widget-actions">
           <button id="copy-widget">Copiar URL</button
@@ -963,6 +1312,345 @@
           se a porta estiver ocupada por outro aplicativo, copie a nova URL para
           o OBS. Sugestão de tamanho no OBS: 500 × 800.
         </p>
+        <section class="studio-card">
+          <h2>Widgets de alertas e áudio OBS</h2>
+          <p data-studio-feedback role="status"></p>
+          <label for="studio-alert-overlay-url"
+            >Widget de alertas para o OBS</label
+          >
+          <div class="studio-inline">
+            <input id="studio-alert-overlay-url" readonly />
+            <button id="studio-copy-alert-overlay">Copiar URL</button>
+          </div>
+          <p>
+            No OBS, adicione uma fonte Navegador com esta URL. Use Testar
+            combinação para verificar o widget.
+          </p>
+          <p id="studio-alert-overlay-status" role="status"></p>
+          <label
+            >Saída de áudio das automações
+            <select id="studio-alert-output">
+              <option value="">Padrão do Windows</option>
+              <option value="@obs">OBS · Fonte Navegador de áudio</option>
+            </select>
+          </label>
+          <label for="studio-obs-audio-url">URL da fonte de áudio do OBS</label>
+          <div class="studio-inline">
+            <input id="studio-obs-audio-url" readonly />
+            <button id="studio-copy-obs-audio">Copiar URL de áudio</button>
+            <button id="studio-test-obs-audio">Testar no OBS</button>
+          </div>
+          <p>
+            Na fonte Navegador, marque Controlar áudio via OBS para receber os
+            alertas em um canal próprio do mixer.
+          </p>
+          <div class="feature-actions">
+            <button id="studio-alert-output-refresh">
+              Buscar dispositivos
+            </button>
+            <button id="studio-alert-output-save">Salvar saída</button>
+          </div>
+        </section>
+        <details class="type-panel">
+          <summary>HUDs, editor e soundbar</summary>
+          <div class="type-content">
+            <label>HUD padrão<input id="sr-url" readonly /></label
+            ><label
+              >HUD personalizado<input id="sr-custom-url" readonly
+            /></label>
+            <div class="feature-actions">
+              <button data-sr-open="standard">Abrir HUD padrão</button
+              ><button data-sr-open="custom">Abrir HUD personalizado</button
+              ><button data-sr-open="editor">
+                Editor completo de HUD / CSS
+              </button>
+            </div>
+            <iframe
+              id="sr-preview"
+              title="Prévia do HUD SR"
+              sandbox="allow-scripts allow-same-origin"
+            ></iframe
+            ><label class="check-row"
+              ><input id="sr-loopback-enabled" type="checkbox" /> Medir áudio da
+              saída para soundbar</label
+            ><label
+              >Saída da soundbar<select id="sr-loopback-output">
+                <option value="">Saída padrão</option>
+              </select></label
+            ><button id="sr-loopback-save">Aplicar soundbar</button>
+            <p>
+              O medidor usa o áudio da saída selecionada. Outros sons no mesmo
+              dispositivo também podem aparecer. O editor preserva temas, CSS,
+              RGB e barras do pacote original.
+            </p>
+          </div>
+        </details>
+      </section>
+      <section
+        id="rewards-panel"
+        class="feature-panel settings-page"
+        hidden
+        data-i18n-ignore
+      >
+        <div class="settings-heading">
+          <span class="settings-eyebrow">CENTRAL DE LIVE · CONFIGURAÇÕES</span>
+          <h1>Resgates de pontos</h1>
+          <p>
+            Vincule recompensas a áudio, vídeo e GIF. Configure pontos e atalhos
+            do Stream Deck.
+          </p>
+        </div>
+        <p data-studio-feedback role="status"></p>
+        <div class="settings-links">
+          <button type="button" data-guide-tab="studio">Contas →</button
+          ><button type="button" data-guide-tab="widget">Fontes OBS →</button>
+        </div>
+        <section class="studio-card">
+          <h2>Mini alertas de pontos do canal</h2>
+          <p id="studio-kick-rewards-status" role="status"></p>
+          <label
+            >Plataforma da recompensa
+            <select id="studio-reward-provider">
+              <option value="twitch">Twitch</option>
+              <option value="kick">Kick</option>
+            </select>
+          </label>
+          <div class="feature-actions">
+            <button id="studio-reload">Carregar recompensas</button>
+            <button id="studio-connect-kick-rewards" hidden>
+              Conectar Kick
+            </button>
+          </div>
+          <p id="studio-rewards-status" role="status"></p>
+          <label
+            >Recompensa
+            <select id="studio-rewards">
+              <option value="">Selecione uma recompensa</option>
+            </select>
+          </label>
+          <label
+            >Vincular a uma recompensa da outra plataforma
+            <select id="studio-partner">
+              <option value="">Sem vínculo</option>
+            </select>
+          </label>
+          <label for="studio-visual-file">Vídeo, GIF ou imagem</label>
+          <div class="studio-inline">
+            <input id="studio-visual-file" readonly />
+            <button id="studio-pick-visual">Escolher</button>
+            <button id="studio-clear-visual">Limpar</button>
+          </div>
+          <label for="studio-audio-file">Áudio separado</label>
+          <div class="studio-inline">
+            <input id="studio-audio-file" readonly />
+            <button id="studio-pick-audio">Escolher</button>
+            <button id="studio-clear-audio">Limpar</button>
+          </div>
+          <button id="studio-use-linked-audio" hidden>
+            Usar áudio já vinculado
+          </button>
+          <p>
+            O áudio separado toca junto com o visual. Se ficar vazio, o vídeo
+            usa sua própria faixa de áudio.
+          </p>
+          <div class="studio-inline">
+            <label
+              >Volume (%)
+              <input
+                id="studio-volume"
+                type="number"
+                min="0"
+                max="100"
+                value="75"
+            /></label>
+            <label
+              >Duração máxima (s)
+              <input
+                id="studio-duration"
+                type="number"
+                min="1"
+                max="120"
+                value="8"
+            /></label>
+          </div>
+          <label
+            >Atalho global para Stream Deck
+            <input
+              id="studio-hotkey"
+              maxlength="80"
+              placeholder="Ex.: Ctrl+Alt+F8"
+          /></label>
+          <div class="feature-actions">
+            <button id="studio-save">Salvar regra</button>
+            <button id="studio-test">Testar regra salva</button>
+            <button id="studio-preview-file">Testar combinação</button>
+            <button id="studio-remove">Remover regra</button>
+          </div>
+          <details>
+            <summary>Criar recompensa nos canais</summary>
+            <label
+              >Nome <input id="studio-reward-title" maxlength="45"
+            /></label>
+            <label
+              >Custo em pontos
+              <input id="studio-reward-cost" type="number" min="1"
+            /></label>
+            <label
+              >Descrição <input id="studio-reward-description" maxlength="200"
+            /></label>
+            <label
+              ><input id="studio-create-twitch" type="checkbox" /> Twitch</label
+            >
+            <label
+              ><input id="studio-create-kick" type="checkbox" /> Kick</label
+            >
+            <p>A mídia dos campos acima fica na Central e toca no resgate.</p>
+            <button id="studio-create-rewards">
+              Criar recompensas selecionadas
+            </button>
+          </details>
+          <details>
+            <summary>Últimos resgates</summary>
+            <ol id="studio-history"></ol>
+          </details>
+        </section>
+      </section>
+      <section
+        id="permissions-panel"
+        class="feature-panel settings-page"
+        hidden
+        data-i18n-ignore
+      >
+        <div class="settings-heading">
+          <span class="settings-eyebrow">CENTRAL DE LIVE · CONFIGURAÇÕES</span>
+          <h1>Permissões e cargos</h1>
+          <p>
+            Escolha quem pode operar os comandos. Os cargos são locais à
+            Central.
+          </p>
+        </div>
+        <p data-automation-status role="status"></p>
+        <section class="studio-card">
+          <h2>Cargos e acesso aos comandos</h2>
+          <label
+            >Plataforma
+            <select id="automation-member-platform">
+              <option value="twitch">Twitch</option>
+              <option value="kick">Kick</option>
+              <option value="youtube">YouTube</option>
+              <option value="starvios">Starvios</option>
+            </select></label
+          >
+          <label
+            >Usuário ou ID do canal YouTube
+            <input id="automation-member-login" maxlength="100"
+          /></label>
+          <label
+            >Nome do cargo local
+            <input
+              id="automation-member-role"
+              maxlength="60"
+              placeholder="Ex.: Operador de música"
+          /></label>
+          <div id="automation-member-permissions">
+            <label><input type="checkbox" value="skip" /> !skip / !pular</label>
+            <label
+              ><input type="checkbox" value="pause" /> !pausa / !pause</label
+            >
+            <label
+              ><input type="checkbox" value="play" /> !play / !continuar</label
+            >
+            <label><input type="checkbox" value="stop" /> !stop / !parar</label>
+            <label><input type="checkbox" value="prev" /> !anterior</label>
+            <label
+              ><input type="checkbox" value="promote" /> Promover música</label
+            >
+          </div>
+          <button id="automation-member-save">Salvar permissões</button>
+          <p>
+            O cargo vale somente na Central. Marque os controles permitidos para
+            cada pessoa. O dono do canal conectado pode usar todos os controles.
+            O SR precisa estar ativo.
+          </p>
+          <ul id="automation-members"></ul>
+        </section>
+        <p>
+          <button type="button" data-guide-tab="sr">
+            Comandos e votação do SR →
+          </button>
+        </p>
+      </section>
+      <section
+        id="counters-panel"
+        class="feature-panel settings-page"
+        hidden
+        data-i18n-ignore
+      >
+        <div class="settings-heading">
+          <span class="settings-eyebrow">CENTRAL DE LIVE · CONFIGURAÇÕES</span>
+          <h1>Contadores de espectadores</h1>
+          <p>Configure as plataformas e a fonte independente para o OBS.</p>
+        </div>
+        <details id="viewers-panel" open>
+          <summary>Contadores de espectadores — chat e OBS</summary>
+          <label
+            ><input id="viewer-enabled" type="checkbox" /> Ativar
+            contadores</label
+          >
+          <label
+            ><input id="viewer-showChat" type="checkbox" /> Mostrar no
+            chat</label
+          >
+          <label
+            ><input id="viewer-showOverlay" type="checkbox" /> Mostrar no modo
+            transparente</label
+          >
+          <label
+            >Posição no overlay<select id="viewer-position">
+              <option value="top">Superior</option>
+              <option value="bottom">Inferior</option>
+            </select></label
+          >
+          <label
+            >Atualização (segundos)<input
+              id="viewer-interval"
+              type="number"
+              min="30"
+              max="300"
+              value="30"
+          /></label>
+          <label
+            >Fonte (px)<input
+              id="viewer-fontSize"
+              type="number"
+              min="12"
+              max="48"
+              value="18"
+          /></label>
+          <label
+            >Cor<input id="viewer-color" type="color" value="#ffffff"
+          /></label>
+          <p>
+            Selecione abaixo quais plataformas incluir. Desmarcar não desconecta
+            o chat. O total soma as plataformas selecionadas e disponíveis, não
+            pessoas únicas. “—” significa sem dados; o total fica parcial quando
+            falta uma plataforma.
+          </p>
+          <p>
+            Os contadores reutilizam as contas de Contas e conexões. As
+            credenciais alternativas também ficam nessa página. As configurações
+            abaixo controlam apenas a exibição.
+          </p>
+          <label
+            ><input id="viewer-showTotal" type="checkbox" /> Mostrar o total
+            junto às plataformas selecionadas</label
+          >
+          <div id="viewer-sources"></div>
+          <button id="save-viewers">Salvar e atualizar contadores</button>
+          <p id="viewer-status" role="status"></p>
+          <h3>Widgets para Fonte de navegador no OBS</h3>
+          <div id="viewer-urls" class="viewer-urls"></div>
+        </details>
       </section>
       <section id="setup">
         <div class="intro">
@@ -1284,6 +1972,7 @@
             <label><input type="checkbox" value="twitch" checked /> Twitch</label>
             <label><input type="checkbox" value="kick" /> Kick</label>
             <label><input type="checkbox" value="youtube" /> YouTube</label>
+            <label><input type="checkbox" value="starvios" /> Starvios</label>
           </div>
         </details>
         <input id="studio-message" aria-label="Mensagem do chat" placeholder="Escreva no chat…" maxlength="500" required />
@@ -1310,9 +1999,11 @@
     <script src="media-ui.js"></script>
     <script src="player-ui.js"></script>
     <script src="sr-settings-ui.js"></script>
+    <script src="connections-ui.js"></script>
     <script src="alerts-ui.js"></script>
     <script src="viewers-render.js"></script>
     <script src="viewers-ui.js"></script>
     <script src="studio-ui.js"></script>
+    <script src="chat-automation-ui.js"></script>
   </body>
 </html>

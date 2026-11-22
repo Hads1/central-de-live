@@ -1,12 +1,12 @@
 {
   "name": "central-de-live",
-  "version": "0.1.0-test.5",
+  "version": "0.1.0-test.14",
   "description": "Chat, SR e automações para transmissões ao vivo",
   "main": "main.js",
   "license": "GPL-3.0-only",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test.js viewers.test.js",
+    "test": "node --test test.js viewers.test.js chat-automation.test.js message-templates.test.js platform-activity.test.js",
     "smoke": "electron . --smoke-test",
     "live": "node live-test.js",
     "format": "prettier --write .",
